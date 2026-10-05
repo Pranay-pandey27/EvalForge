@@ -1,0 +1,34 @@
+{
+  "task_id": "split_seed_117",
+  "title": "Seeded reproducible split indices",
+  "repository": "reproducibility-heldout",
+  "category": "random_seed_handling",
+  "difficulty": "easy",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "supplied seed is ignored when constructing the generator",
+  "dependencies": [
+    "numpy>=1.26",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "numpy",
+    "seed",
+    "split",
+    "reproducibility"
+  ],
+  "schema_version": "1.0"
+}

@@ -1,0 +1,34 @@
+{
+  "task_id": "pandas_leakage_004",
+  "title": "Train-only centering statistics",
+  "repository": "tabular-preprocessing-mini",
+  "category": "pandas_data_leakage",
+  "difficulty": "medium",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "preprocessing statistics include held-out test rows",
+  "dependencies": [
+    "pandas>=2.2",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "pandas",
+    "data-leakage",
+    "preprocessing",
+    "split"
+  ],
+  "schema_version": "1.0"
+}

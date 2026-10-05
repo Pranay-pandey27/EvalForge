@@ -1,0 +1,33 @@
+{
+  "task_id": "gradient_accumulation_112",
+  "title": "Gradient accumulation windows",
+  "repository": "torch-loops-heldout",
+  "category": "incorrect_gradient_handling",
+  "difficulty": "hard",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "optimizer clears and steps every batch instead of per accumulation window",
+  "dependencies": [
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "pytorch",
+    "gradient-accumulation",
+    "optimizer",
+    "batch"
+  ],
+  "schema_version": "1.0"
+}

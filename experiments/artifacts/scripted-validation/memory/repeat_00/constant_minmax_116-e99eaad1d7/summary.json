@@ -1,0 +1,68 @@
+{
+  "run_id": "constant_minmax_116-e99eaad1d7",
+  "task_id": "constant_minmax_116",
+  "condition": "memory",
+  "started_at": "2026-08-11T23:33:19.952056Z",
+  "finished_at": "2026-08-11T23:33:22.906019Z",
+  "termination_reason": "tests_passed",
+  "resolved": true,
+  "visible_verification": {
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests"
+    ],
+    "exit_code": 0,
+    "passed": true,
+    "output": "..                                                                       [100%]\n2 passed in 0.22s\n",
+    "runtime_seconds": 0.9039357070000733,
+    "tests_collected": 2,
+    "tests_passed": 2,
+    "tests_failed": null,
+    "environment_error": false
+  },
+  "evaluator_verification": {
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests",
+      ".evalforge_evaluator_tests"
+    ],
+    "exit_code": 0,
+    "passed": true,
+    "output": "....                                                                     [100%]\n4 passed in 0.26s\n",
+    "runtime_seconds": 0.8884634839996579,
+    "tests_collected": 4,
+    "tests_passed": 4,
+    "tests_failed": null,
+    "environment_error": false
+  },
+  "changed_files": [
+    "numerics/scaling.py"
+  ],
+  "patch_valid": true,
+  "regression_detected": false,
+  "iterations": 2,
+  "tool_calls": 4,
+  "usage": {
+    "input_tokens": null,
+    "output_tokens": null,
+    "estimated_cost_usd": null
+  },
+  "runtime_seconds": 3.0103921390000323,
+  "trace_path": "/workspace/scratch/45e99c6e6aba/evalforge/experiments/runs/scripted-validation/memory/repeat_00/constant_minmax_116-e99eaad1d7/trace.jsonl",
+  "workspace_path": "/workspace/scratch/45e99c6e6aba/evalforge/experiments/runs/scripted-validation/memory/repeat_00/constant_minmax_116-e99eaad1d7/workspace",
+  "provider": "ScriptedProvider",
+  "model": null,
+  "retrieved_memory_ids": [
+    3,
+    6,
+    8,
+    2
+  ],
+  "schema_version": "1.0"
+}

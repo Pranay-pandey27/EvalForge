@@ -1,0 +1,12 @@
+--- a/heldout_metrics/regression.py
++++ b/heldout_metrics/regression.py
+@@ -1,4 +1,7 @@
+ import numpy as np
+ def mae(y_true, y_pred):
+-    errors = np.asarray(y_true) - np.asarray(y_pred)
+-    return float(np.sqrt(np.mean(errors ** 2)))
++    truth = np.asarray(y_true)
++    prediction = np.asarray(y_pred)
++    if truth.shape != prediction.shape:
++        raise ValueError("inputs must have matching shapes")
++    return float(np.mean(np.abs(truth - prediction)))

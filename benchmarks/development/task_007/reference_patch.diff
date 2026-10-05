@@ -1,0 +1,12 @@
+--- a/reproducibility/bootstrap.py
++++ b/reproducibility/bootstrap.py
+@@ -1,7 +1,7 @@
+ import numpy as np
+ 
+ def bootstrap_mean(values, seed):
+-    np.random.seed(seed)
++    rng = np.random.default_rng(seed)
+     data = np.asarray(values)
+-    sample = np.random.choice(data, size=len(data), replace=True)
++    sample = rng.choice(data, size=len(data), replace=True)
+     return float(sample.mean())

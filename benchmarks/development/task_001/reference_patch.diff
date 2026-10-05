@@ -1,0 +1,17 @@
+diff --git a/scientific_stats/normalization.py b/scientific_stats/normalization.py
+--- a/scientific_stats/normalization.py
++++ b/scientific_stats/normalization.py
+@@ -15,7 +15,9 @@ def zscore_features(values: np.ndarray) -> np.ndarray:
+     if matrix.ndim != 2:
+         raise ValueError("values must be a two-dimensional feature matrix")
+ 
+-    means = matrix.mean(axis=1)
+-    standard_deviations = matrix.std(axis=1)
+-    return (matrix - means) / standard_deviations
+-
++    means = matrix.mean(axis=0, keepdims=True)
++    standard_deviations = matrix.std(axis=0, keepdims=True)
++    safe_standard_deviations = np.where(
++        standard_deviations == 0.0, 1.0, standard_deviations
++    )
++    return (matrix - means) / safe_standard_deviations

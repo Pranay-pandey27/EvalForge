@@ -1,0 +1,33 @@
+{
+  "task_id": "gradient_order_111",
+  "title": "Optimizer operation order",
+  "repository": "torch-loops-heldout",
+  "category": "incorrect_gradient_handling",
+  "difficulty": "medium",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "zero_grad is called after backward and erases current gradients",
+  "dependencies": [
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "pytorch",
+    "gradient",
+    "zero-grad",
+    "ordering"
+  ],
+  "schema_version": "1.0"
+}

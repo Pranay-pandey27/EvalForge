@@ -1,0 +1,7 @@
+--- a/physics_units/temperature.py
++++ b/physics_units/temperature.py
+@@ -1,3 +1,3 @@
+ import numpy as np
+ def kelvin_to_celsius(value):
+-    return np.asarray(value, dtype=float) - 273.0
++    return np.asarray(value, dtype=float) - 273.15

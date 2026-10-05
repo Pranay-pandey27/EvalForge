@@ -1,0 +1,6 @@
+--- a/tabular/features.py
++++ b/tabular/features.py
+@@ -1,2 +1,2 @@
+ def split_features_target(frame, target):
+-    return frame.copy(), frame[target].copy()
++    return frame.drop(columns=[target]).copy(), frame[target].copy()

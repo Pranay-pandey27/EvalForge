@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "tool",
+    "plan": "Inspect the implementation named in the issue.",
+    "tool_name": "read_file",
+    "arguments": {
+      "path": "torch_loops/gradient_order.py"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Establish verifier evidence before editing.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "tool",
+    "diagnosis": {
+      "failed_test": "tests/test_behavior.py::test_gradient_operation_order",
+      "evidence": [
+        "tests/test_behavior.py::test_gradient_operation_order"
+      ],
+      "mechanism": "zero_grad is called after backward and erases current gradients",
+      "next_change": "Clear gradients before forward/backward, then step after backward. Preserve the returned loss."
+    },
+    "tool_name": "apply_patch",
+    "arguments": {
+      "patch": "--- a/torch_loops/gradient_order.py\n+++ b/torch_loops/gradient_order.py\n@@ -1,6 +1,6 @@\n def optimize_batch(model, batch, optimizer, loss_fn):\n+    optimizer.zero_grad()\n     loss = loss_fn(model(batch))\n     loss.backward()\n-    optimizer.zero_grad()\n     optimizer.step()\n     return loss\n"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Run the visible verifier after the repair.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "submit",
+    "plan": "Submit only after the visible verifier passes.",
+    "lesson": "For incorrect_gradient_handling, diagnose zero_grad is called after backward and erases current gradients from test evidence and make the smallest behavior-preserving repair."
+  }
+]

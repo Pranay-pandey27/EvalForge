@@ -1,0 +1,56 @@
+{
+  "$defs": {
+    "AgentState": {
+      "enum": [
+        "task_received",
+        "inspect_repository",
+        "retrieve_memory",
+        "plan_repair",
+        "edit_files",
+        "run_verifier",
+        "diagnose_result",
+        "finished"
+      ],
+      "title": "AgentState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "timestamp": {
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "event_type": {
+      "minLength": 1,
+      "title": "Event Type",
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/AgentState"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    },
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "sequence",
+    "event_type",
+    "state"
+  ],
+  "title": "TraceEvent",
+  "type": "object"
+}

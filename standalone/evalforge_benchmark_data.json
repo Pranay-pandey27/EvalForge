@@ -1,0 +1,2518 @@
+{
+  "dataset": "EvalForge Benchmark",
+  "version": "1.0.0",
+  "description": "Buggy scientific-Python / ML repositories with agent-visible issues, visible tests, protected evaluator tests, known-good reference patches, and deterministic scripted repair actions. 8 development (memory-seeding) tasks + 20 held-out evaluation tasks.",
+  "n_tasks": 28,
+  "tasks": [
+    {
+      "suite": "development",
+      "name": "task_001",
+      "issue": "# Standardize a feature matrix column-wise\n\n`scientific_stats.zscore_features` should standardize every feature column in a\ntwo-dimensional NumPy array. The current implementation raises a broadcasting\nerror for ordinary rectangular inputs and produces incorrect behavior for\nconstant-valued features.\n\nRepair the implementation without changing its public API. Each non-constant\nfeature should have mean approximately zero and standard deviation approximately\none. Constant feature columns should produce finite zeros.\n\n",
+      "metadata": {
+        "task_id": "numpy_broadcast_001",
+        "title": "Column-wise z-score broadcasting",
+        "repository": "scientific-stats-mini",
+        "category": "numpy_shape_broadcasting",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "row statistics have incompatible shape for rectangular feature matrices",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "numpy",
+          "broadcasting",
+          "numerical-stability"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "diff --git a/scientific_stats/normalization.py b/scientific_stats/normalization.py\n--- a/scientific_stats/normalization.py\n+++ b/scientific_stats/normalization.py\n@@ -15,7 +15,9 @@ def zscore_features(values: np.ndarray) -> np.ndarray:\n     if matrix.ndim != 2:\n         raise ValueError(\"values must be a two-dimensional feature matrix\")\n \n-    means = matrix.mean(axis=1)\n-    standard_deviations = matrix.std(axis=1)\n-    return (matrix - means) / standard_deviations\n-\n+    means = matrix.mean(axis=0, keepdims=True)\n+    standard_deviations = matrix.std(axis=0, keepdims=True)\n+    safe_standard_deviations = np.where(\n+        standard_deviations == 0.0, 1.0, standard_deviations\n+    )\n+    return (matrix - means) / safe_standard_deviations\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the normalization implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "scientific_stats/normalization.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_normalization.py::test_standardizes_each_feature_column",
+            "evidence": [
+              "tests/test_normalization.py::test_standardizes_each_feature_column"
+            ],
+            "mechanism": "Row-reduction vectors cannot broadcast over a rectangular matrix; column statistics require axis 0 with preserved dimensions.",
+            "next_change": "Compute column means and standard deviations with keepdims and protect constant columns."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "diff --git a/scientific_stats/normalization.py b/scientific_stats/normalization.py\n--- a/scientific_stats/normalization.py\n+++ b/scientific_stats/normalization.py\n@@ -15,7 +15,9 @@ def zscore_features(values: np.ndarray) -> np.ndarray:\n     if matrix.ndim != 2:\n         raise ValueError(\"values must be a two-dimensional feature matrix\")\n \n-    means = matrix.mean(axis=1)\n-    standard_deviations = matrix.std(axis=1)\n-    return (matrix - means) / standard_deviations\n-\n+    means = matrix.mean(axis=0, keepdims=True)\n+    standard_deviations = matrix.std(axis=0, keepdims=True)\n+    safe_standard_deviations = np.where(\n+        standard_deviations == 0.0, 1.0, standard_deviations\n+    )\n+    return (matrix - means) / safe_standard_deviations\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For NumPy feature normalization, align reduction axes with feature columns, preserve broadcast dimensions, and handle zero-variance columns explicitly."
+        }
+      ],
+      "repo_files": {
+        "scientific_stats/__init__.py": "\"\"\"Small scientific statistics helpers used by EvalForge tasks.\"\"\"\n\nfrom scientific_stats.normalization import zscore_features\n\n__all__ = [\"zscore_features\"]\n\n",
+        "scientific_stats/normalization.py": "\"\"\"Feature normalization utilities.\"\"\"\n\nfrom __future__ import annotations\n\nimport numpy as np\n\n\ndef zscore_features(values: np.ndarray) -> np.ndarray:\n    \"\"\"Return a column-wise z-score transform of a feature matrix.\n\n    Constant-valued feature columns should map to finite zeros.\n    \"\"\"\n\n    matrix = np.asarray(values, dtype=float)\n    if matrix.ndim != 2:\n        raise ValueError(\"values must be a two-dimensional feature matrix\")\n\n    means = matrix.mean(axis=1)\n    standard_deviations = matrix.std(axis=1)\n    return (matrix - means) / standard_deviations\n\n",
+        "tests/test_normalization.py": "from __future__ import annotations\n\nimport numpy as np\nfrom scientific_stats import zscore_features\n\n\ndef test_standardizes_each_feature_column() -> None:\n    values = np.array(\n        [\n            [1.0, 10.0],\n            [2.0, 20.0],\n            [3.0, 30.0],\n            [4.0, 40.0],\n        ]\n    )\n\n    transformed = zscore_features(values)\n\n    np.testing.assert_allclose(transformed.mean(axis=0), np.zeros(2), atol=1e-12)\n    np.testing.assert_allclose(transformed.std(axis=0), np.ones(2), atol=1e-12)\n\n\ndef test_preserves_shape() -> None:\n    values = np.arange(15, dtype=float).reshape(5, 3)\n    assert zscore_features(values).shape == values.shape\n\n"
+      },
+      "evaluator_files": {
+        "test_evaluator_normalization.py": "from __future__ import annotations\n\nimport numpy as np\nimport pytest\nfrom scientific_stats import zscore_features\n\n\ndef test_constant_feature_maps_to_finite_zeros() -> None:\n    values = np.array([[2.0, 5.0], [2.0, 7.0], [2.0, 9.0]])\n    transformed = zscore_features(values)\n    assert np.isfinite(transformed).all()\n    np.testing.assert_array_equal(transformed[:, 0], np.zeros(3))\n\n\ndef test_does_not_mutate_input() -> None:\n    values = np.array([[1.0, 3.0], [2.0, 5.0], [3.0, 7.0]])\n    original = values.copy()\n    zscore_features(values)\n    np.testing.assert_array_equal(values, original)\n\n\ndef test_rejects_non_matrix_input() -> None:\n    with pytest.raises(ValueError, match=\"two-dimensional\"):\n        zscore_features(np.array([1.0, 2.0, 3.0]))\n\n"
+      }
+    },
+    {
+      "suite": "development",
+      "name": "task_002",
+      "issue": "`rmse` is reporting mean squared error rather than root mean squared error. Repair the metric, preserve NumPy input support, and return a Python float.\n",
+      "metadata": {
+        "task_id": "regression_rmse_002",
+        "title": "Root mean squared error implementation",
+        "repository": "ml-metrics-mini",
+        "category": "regression_metrics",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "RMSE omits the outer square root and reports MSE",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "numpy",
+          "metrics",
+          "regression"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/ml_metrics/regression.py\n+++ b/ml_metrics/regression.py\n@@ -2,4 +2,4 @@\n \n def rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:\n     errors = np.asarray(y_true, dtype=float) - np.asarray(y_pred, dtype=float)\n-    return float(np.mean(errors ** 2))\n+    return float(np.sqrt(np.mean(errors ** 2)))\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "ml_metrics/regression.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_rmse_takes_square_root",
+            "evidence": [
+              "tests/test_behavior.py::test_rmse_takes_square_root"
+            ],
+            "mechanism": "RMSE omits the outer square root and reports MSE",
+            "next_change": "`rmse` is reporting mean squared error rather than root mean squared error. Repair the metric, preserve NumPy input support, and return a Python float."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/ml_metrics/regression.py\n+++ b/ml_metrics/regression.py\n@@ -2,4 +2,4 @@\n \n def rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:\n     errors = np.asarray(y_true, dtype=float) - np.asarray(y_pred, dtype=float)\n-    return float(np.mean(errors ** 2))\n+    return float(np.sqrt(np.mean(errors ** 2)))\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For regression_metrics, diagnose rmse omits the outer square root and reports mse from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "ml_metrics/__init__.py": "",
+        "ml_metrics/regression.py": "import numpy as np\n\ndef rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:\n    errors = np.asarray(y_true, dtype=float) - np.asarray(y_pred, dtype=float)\n    return float(np.mean(errors ** 2))\n",
+        "tests/test_behavior.py": "import numpy as np\nfrom ml_metrics.regression import rmse\n\ndef test_rmse_takes_square_root():\n    assert rmse(np.array([0, 0]), np.array([3, 4])) == pytest.approx(np.sqrt(12.5))\n\ndef test_rmse_is_zero_for_exact_predictions():\n    assert rmse(np.array([1, 2]), np.array([1, 2])) == 0.0\n\nimport pytest\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import numpy as np\nfrom ml_metrics.regression import rmse\n\ndef test_evaluator_returns_python_float():\n    assert isinstance(rmse(np.array([1]), np.array([2])), float)\n\ndef test_evaluator_handles_fractional_errors():\n    assert rmse(np.array([0.0, 1.0]), np.array([0.5, 1.5])) == 0.5\n"
+      }
+    },
+    {
+      "suite": "development",
+      "name": "task_003",
+      "issue": "Binary cross entropy returns infinities for probabilities at 0 or 1. Make it finite without mutating inputs.\n",
+      "metadata": {
+        "task_id": "numerical_log_003",
+        "title": "Stable binary cross entropy",
+        "repository": "stable-losses-mini",
+        "category": "numerical_stability",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "logarithms at probability boundaries produce NaN or infinity",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "numpy",
+          "loss",
+          "log0",
+          "numerical-stability"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/stable_losses/binary.py\n+++ b/stable_losses/binary.py\n@@ -3,4 +3,5 @@\n def binary_cross_entropy(labels: np.ndarray, probabilities: np.ndarray) -> float:\n     y = np.asarray(labels, dtype=float)\n     p = np.asarray(probabilities, dtype=float)\n-    return float(-np.mean(y * np.log(p) + (1 - y) * np.log(1 - p)))\n+    safe = np.clip(p, np.finfo(float).eps, 1.0 - np.finfo(float).eps)\n+    return float(-np.mean(y * np.log(safe) + (1 - y) * np.log(1 - safe)))\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "stable_losses/binary.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_boundary_probabilities_are_finite",
+            "evidence": [
+              "tests/test_behavior.py::test_boundary_probabilities_are_finite"
+            ],
+            "mechanism": "logarithms at probability boundaries produce NaN or infinity",
+            "next_change": "Binary cross entropy returns infinities for probabilities at 0 or 1. Make it finite without mutating inputs."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/stable_losses/binary.py\n+++ b/stable_losses/binary.py\n@@ -3,4 +3,5 @@\n def binary_cross_entropy(labels: np.ndarray, probabilities: np.ndarray) -> float:\n     y = np.asarray(labels, dtype=float)\n     p = np.asarray(probabilities, dtype=float)\n-    return float(-np.mean(y * np.log(p) + (1 - y) * np.log(1 - p)))\n+    safe = np.clip(p, np.finfo(float).eps, 1.0 - np.finfo(float).eps)\n+    return float(-np.mean(y * np.log(safe) + (1 - y) * np.log(1 - safe)))\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For numerical_stability, diagnose logarithms at probability boundaries produce nan or infinity from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "stable_losses/__init__.py": "",
+        "stable_losses/binary.py": "import numpy as np\n\ndef binary_cross_entropy(labels: np.ndarray, probabilities: np.ndarray) -> float:\n    y = np.asarray(labels, dtype=float)\n    p = np.asarray(probabilities, dtype=float)\n    return float(-np.mean(y * np.log(p) + (1 - y) * np.log(1 - p)))\n",
+        "tests/test_behavior.py": "import numpy as np\nfrom stable_losses.binary import binary_cross_entropy\n\ndef test_boundary_probabilities_are_finite():\n    value = binary_cross_entropy(np.array([0, 1]), np.array([0.0, 1.0]))\n    assert np.isfinite(value)\n\ndef test_typical_probabilities_match_formula():\n    assert binary_cross_entropy(np.array([1]), np.array([0.5])) == np.log(2)\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import numpy as np\nfrom stable_losses.binary import binary_cross_entropy\n\ndef test_evaluator_does_not_mutate_probabilities():\n    p = np.array([0.0, 0.8])\n    before = p.copy()\n    binary_cross_entropy(np.array([0, 1]), p)\n    np.testing.assert_array_equal(p, before)\n\ndef test_evaluator_near_boundary_is_nonnegative():\n    assert binary_cross_entropy(np.array([1]), np.array([1.0])) >= 0.0\n"
+      }
+    },
+    {
+      "suite": "development",
+      "name": "task_004",
+      "issue": "The centering transformer learns its mean from both train and test rows. Fit statistics on training data only and apply them to both splits.\n",
+      "metadata": {
+        "task_id": "pandas_leakage_004",
+        "title": "Train-only centering statistics",
+        "repository": "tabular-preprocessing-mini",
+        "category": "pandas_data_leakage",
+        "difficulty": "medium",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "preprocessing statistics include held-out test rows",
+        "dependencies": [
+          "pandas>=2.2",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "pandas",
+          "data-leakage",
+          "preprocessing",
+          "split"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/tabular_preprocessing/centering.py\n+++ b/tabular_preprocessing/centering.py\n@@ -1,6 +1,5 @@\n import pandas as pd\n \n def center_splits(train: pd.DataFrame, test: pd.DataFrame):\n-    combined = pd.concat([train, test], ignore_index=True)\n-    mean = combined.mean()\n+    mean = train.mean()\n     return train - mean, test - mean, mean\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "tabular_preprocessing/centering.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_statistics_are_fit_on_train_only",
+            "evidence": [
+              "tests/test_behavior.py::test_statistics_are_fit_on_train_only"
+            ],
+            "mechanism": "preprocessing statistics include held-out test rows",
+            "next_change": "The centering transformer learns its mean from both train and test rows. Fit statistics on training data only and apply them to both splits."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/tabular_preprocessing/centering.py\n+++ b/tabular_preprocessing/centering.py\n@@ -1,6 +1,5 @@\n import pandas as pd\n \n def center_splits(train: pd.DataFrame, test: pd.DataFrame):\n-    combined = pd.concat([train, test], ignore_index=True)\n-    mean = combined.mean()\n+    mean = train.mean()\n     return train - mean, test - mean, mean\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For pandas_data_leakage, diagnose preprocessing statistics include held-out test rows from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "tabular_preprocessing/__init__.py": "",
+        "tabular_preprocessing/centering.py": "import pandas as pd\n\ndef center_splits(train: pd.DataFrame, test: pd.DataFrame):\n    combined = pd.concat([train, test], ignore_index=True)\n    mean = combined.mean()\n    return train - mean, test - mean, mean\n",
+        "tests/test_behavior.py": "import pandas as pd\nfrom tabular_preprocessing.centering import center_splits\n\ndef test_statistics_are_fit_on_train_only():\n    train = pd.DataFrame({'x': [0.0, 2.0]})\n    test = pd.DataFrame({'x': [100.0]})\n    centered_train, _, mean = center_splits(train, test)\n    assert mean['x'] == 1.0\n    assert centered_train['x'].mean() == 0.0\n\ndef test_output_columns_are_preserved():\n    train = pd.DataFrame({'a': [1], 'b': [2]})\n    test = pd.DataFrame({'a': [3], 'b': [4]})\n    assert list(center_splits(train, test)[0].columns) == ['a', 'b']\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import pandas as pd\nfrom tabular_preprocessing.centering import center_splits\n\ndef test_evaluator_test_values_do_not_change_fitted_mean():\n    train = pd.DataFrame({'x': [2.0, 4.0]})\n    _, _, mean_a = center_splits(train, pd.DataFrame({'x': [-999.0]}))\n    _, _, mean_b = center_splits(train, pd.DataFrame({'x': [999.0]}))\n    pd.testing.assert_series_equal(mean_a, mean_b)\n\ndef test_evaluator_applies_train_mean_to_test():\n    train = pd.DataFrame({'x': [1.0, 3.0]})\n    test = pd.DataFrame({'x': [5.0]})\n    assert center_splits(train, test)[1].iloc[0, 0] == 3.0\n"
+      }
+    },
+    {
+      "suite": "development",
+      "name": "task_005",
+      "issue": "`train_batch` accumulates stale gradients because the optimizer is never cleared. Follow standard PyTorch batch ordering.\n",
+      "metadata": {
+        "task_id": "pytorch_zero_grad_005",
+        "title": "Clear gradients before a training batch",
+        "repository": "torch-loop-mini",
+        "category": "pytorch_training_loop",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "optimizer gradients are not cleared before backward",
+        "dependencies": [
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "pytorch",
+          "gradient",
+          "optimizer",
+          "training-loop"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/torch_loop/training.py\n+++ b/torch_loop/training.py\n@@ -1,4 +1,5 @@\n def train_batch(model, inputs, targets, optimizer, loss_fn):\n+    optimizer.zero_grad()\n     predictions = model(inputs)\n     loss = loss_fn(predictions, targets)\n     loss.backward()\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "torch_loop/training.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_zero_grad_precedes_backward_and_step",
+            "evidence": [
+              "tests/test_behavior.py::test_zero_grad_precedes_backward_and_step"
+            ],
+            "mechanism": "optimizer gradients are not cleared before backward",
+            "next_change": "`train_batch` accumulates stale gradients because the optimizer is never cleared. Follow standard PyTorch batch ordering."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/torch_loop/training.py\n+++ b/torch_loop/training.py\n@@ -1,4 +1,5 @@\n def train_batch(model, inputs, targets, optimizer, loss_fn):\n+    optimizer.zero_grad()\n     predictions = model(inputs)\n     loss = loss_fn(predictions, targets)\n     loss.backward()\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For pytorch_training_loop, diagnose optimizer gradients are not cleared before backward from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "tests/test_behavior.py": "from torch_loop.training import train_batch\n\nclass Recorder:\n    def __init__(self, events): self.events = events\n    def zero_grad(self): self.events.append('zero_grad')\n    def step(self): self.events.append('step')\n\nclass Loss:\n    def __init__(self, events): self.events = events\n    def backward(self): self.events.append('backward')\n\ndef test_zero_grad_precedes_backward_and_step():\n    events = []\n    model = lambda x: x\n    loss = Loss(events)\n    train_batch(model, 1, 1, Recorder(events), lambda p, t: loss)\n    assert events == ['zero_grad', 'backward', 'step']\n\ndef test_returns_loss_object():\n    events, loss = [], Loss([])\n    assert train_batch(lambda x: x, 1, 1, Recorder(events), lambda p, t: loss) is loss\n",
+        "torch_loop/__init__.py": "",
+        "torch_loop/training.py": "def train_batch(model, inputs, targets, optimizer, loss_fn):\n    predictions = model(inputs)\n    loss = loss_fn(predictions, targets)\n    loss.backward()\n    optimizer.step()\n    return loss\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "from torch_loop.training import train_batch\n\nclass Optimizer:\n    def __init__(self): self.zero_calls = 0; self.steps = 0\n    def zero_grad(self): self.zero_calls += 1\n    def step(self): self.steps += 1\nclass Loss:\n    def backward(self): pass\n\ndef test_evaluator_clears_once_per_batch():\n    optimizer = Optimizer()\n    train_batch(lambda x: x, 0, 0, optimizer, lambda p, t: Loss())\n    assert (optimizer.zero_calls, optimizer.steps) == (1, 1)\n\ndef test_evaluator_model_receives_input():\n    seen = []\n    train_batch(lambda x: seen.append(x) or x, 7, 0, Optimizer(), lambda p, t: Loss())\n    assert seen == [7]\n"
+      }
+    },
+    {
+      "suite": "development",
+      "name": "task_006",
+      "issue": "Only inputs are moved to the configured device. Move both inputs and targets and preserve their order.\n",
+      "metadata": {
+        "task_id": "device_batch_006",
+        "title": "Move all batch tensors to the target device",
+        "repository": "tensor-device-mini",
+        "category": "device_dtype_mismatch",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "target tensor remains on a different device from inputs",
+        "dependencies": [
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "pytorch",
+          "device",
+          "tensor",
+          "batch"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/tensor_device/batch.py\n+++ b/tensor_device/batch.py\n@@ -1,2 +1,2 @@\n def move_batch(inputs, targets, device):\n-    return inputs.to(device), targets\n+    return inputs.to(device), targets.to(device)\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "tensor_device/batch.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_moves_inputs_and_targets",
+            "evidence": [
+              "tests/test_behavior.py::test_moves_inputs_and_targets"
+            ],
+            "mechanism": "target tensor remains on a different device from inputs",
+            "next_change": "Only inputs are moved to the configured device. Move both inputs and targets and preserve their order."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/tensor_device/batch.py\n+++ b/tensor_device/batch.py\n@@ -1,2 +1,2 @@\n def move_batch(inputs, targets, device):\n-    return inputs.to(device), targets\n+    return inputs.to(device), targets.to(device)\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For device_dtype_mismatch, diagnose target tensor remains on a different device from inputs from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "tensor_device/__init__.py": "",
+        "tensor_device/batch.py": "def move_batch(inputs, targets, device):\n    return inputs.to(device), targets\n",
+        "tests/test_behavior.py": "from tensor_device.batch import move_batch\n\nclass Tensor:\n    def __init__(self, name): self.name = name; self.devices = []\n    def to(self, device): self.devices.append(device); return self\n\ndef test_moves_inputs_and_targets():\n    x, y = Tensor('x'), Tensor('y')\n    move_batch(x, y, 'cuda')\n    assert x.devices == ['cuda'] and y.devices == ['cuda']\n\ndef test_preserves_tuple_order():\n    x, y = Tensor('x'), Tensor('y')\n    assert move_batch(x, y, 'cpu') == (x, y)\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "from tensor_device.batch import move_batch\n\nclass Tensor:\n    def __init__(self): self.calls = 0\n    def to(self, device): self.calls += 1; self.device = device; return self\n\ndef test_evaluator_moves_each_tensor_exactly_once():\n    x, y = Tensor(), Tensor()\n    move_batch(x, y, 'mps')\n    assert (x.calls, y.calls) == (1, 1)\n\ndef test_evaluator_uses_requested_device():\n    x, y = Tensor(), Tensor()\n    move_batch(x, y, 'accelerator:1')\n    assert x.device == y.device == 'accelerator:1'\n"
+      }
+    },
+    {
+      "suite": "development",
+      "name": "task_007",
+      "issue": "Bootstrap sampling resets NumPy's global RNG. Make sampling reproducible from the supplied seed without perturbing global random state.\n",
+      "metadata": {
+        "task_id": "seed_isolation_007",
+        "title": "Local reproducible bootstrap RNG",
+        "repository": "reproducibility-mini",
+        "category": "random_seed_handling",
+        "difficulty": "medium",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "function mutates NumPy global random state",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "numpy",
+          "random",
+          "seed",
+          "reproducibility"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/reproducibility/bootstrap.py\n+++ b/reproducibility/bootstrap.py\n@@ -1,7 +1,7 @@\n import numpy as np\n \n def bootstrap_mean(values, seed):\n-    np.random.seed(seed)\n+    rng = np.random.default_rng(seed)\n     data = np.asarray(values)\n-    sample = np.random.choice(data, size=len(data), replace=True)\n+    sample = rng.choice(data, size=len(data), replace=True)\n     return float(sample.mean())\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "reproducibility/bootstrap.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_does_not_reset_global_rng",
+            "evidence": [
+              "tests/test_behavior.py::test_does_not_reset_global_rng"
+            ],
+            "mechanism": "function mutates NumPy global random state",
+            "next_change": "Bootstrap sampling resets NumPy's global RNG. Make sampling reproducible from the supplied seed without perturbing global random state."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/reproducibility/bootstrap.py\n+++ b/reproducibility/bootstrap.py\n@@ -1,7 +1,7 @@\n import numpy as np\n \n def bootstrap_mean(values, seed):\n-    np.random.seed(seed)\n+    rng = np.random.default_rng(seed)\n     data = np.asarray(values)\n-    sample = np.random.choice(data, size=len(data), replace=True)\n+    sample = rng.choice(data, size=len(data), replace=True)\n     return float(sample.mean())\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For random_seed_handling, diagnose function mutates numpy global random state from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "reproducibility/__init__.py": "",
+        "reproducibility/bootstrap.py": "import numpy as np\n\ndef bootstrap_mean(values, seed):\n    np.random.seed(seed)\n    data = np.asarray(values)\n    sample = np.random.choice(data, size=len(data), replace=True)\n    return float(sample.mean())\n",
+        "tests/test_behavior.py": "import numpy as np\nfrom reproducibility.bootstrap import bootstrap_mean\n\ndef test_does_not_reset_global_rng():\n    np.random.seed(123)\n    expected = np.random.random(2)\n    np.random.seed(123)\n    first = np.random.random()\n    bootstrap_mean([1, 2, 3], 7)\n    second = np.random.random()\n    np.testing.assert_allclose([first, second], expected)\n\ndef test_same_seed_is_reproducible():\n    assert bootstrap_mean([1, 2, 9], 4) == bootstrap_mean([1, 2, 9], 4)\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "from reproducibility.bootstrap import bootstrap_mean\n\ndef test_evaluator_returns_float():\n    assert isinstance(bootstrap_mean([1, 2, 3], 1), float)\n\ndef test_evaluator_seed_changes_sampling_path():\n    values = list(range(100))\n    assert bootstrap_mean(values, 1) != bootstrap_mean(values, 2)\n"
+      }
+    },
+    {
+      "suite": "development",
+      "name": "task_008",
+      "issue": "The meters-to-nanometers conversion is off by three orders of magnitude. Correct the SI factor for scalars and arrays.\n",
+      "metadata": {
+        "task_id": "units_nanometer_008",
+        "title": "Meters to nanometers conversion",
+        "repository": "scientific-units-mini",
+        "category": "scientific_unit_conversion",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "SI conversion uses micrometer factor instead of nanometer factor",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "physics",
+          "units",
+          "si",
+          "conversion"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/scientific_units/length.py\n+++ b/scientific_units/length.py\n@@ -1,4 +1,4 @@\n import numpy as np\n \n def meters_to_nanometers(value):\n-    return np.asarray(value) * 1e6\n+    return np.asarray(value) * 1e9\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "scientific_units/length.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_one_meter_is_one_billion_nanometers",
+            "evidence": [
+              "tests/test_behavior.py::test_one_meter_is_one_billion_nanometers"
+            ],
+            "mechanism": "SI conversion uses micrometer factor instead of nanometer factor",
+            "next_change": "The meters-to-nanometers conversion is off by three orders of magnitude. Correct the SI factor for scalars and arrays."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/scientific_units/length.py\n+++ b/scientific_units/length.py\n@@ -1,4 +1,4 @@\n import numpy as np\n \n def meters_to_nanometers(value):\n-    return np.asarray(value) * 1e6\n+    return np.asarray(value) * 1e9\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For scientific_unit_conversion, diagnose si conversion uses micrometer factor instead of nanometer factor from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "scientific_units/__init__.py": "",
+        "scientific_units/length.py": "import numpy as np\n\ndef meters_to_nanometers(value):\n    return np.asarray(value) * 1e6\n",
+        "tests/test_behavior.py": "import numpy as np\nfrom scientific_units.length import meters_to_nanometers\n\ndef test_one_meter_is_one_billion_nanometers():\n    assert meters_to_nanometers(1.0) == 1e9\n\ndef test_array_conversion():\n    np.testing.assert_allclose(meters_to_nanometers([1e-9, 2e-9]), [1.0, 2.0])\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import numpy as np\nfrom scientific_units.length import meters_to_nanometers\n\ndef test_evaluator_zero_is_preserved():\n    assert meters_to_nanometers(0.0) == 0.0\n\ndef test_evaluator_negative_displacement():\n    assert meters_to_nanometers(-3e-9) == np.asarray(-3.0)\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_101",
+      "issue": "Compute one L2 norm per feature column for a two-dimensional sample matrix.\n",
+      "metadata": {
+        "task_id": "numpy_axis_101",
+        "title": "Feature-wise L2 norms",
+        "repository": "array-ops-heldout",
+        "category": "numpy_shape_broadcasting",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "reduction uses the sample axis instead of the feature axis",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "numpy",
+          "axis",
+          "shape",
+          "norm"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/array_ops/norms.py\n+++ b/array_ops/norms.py\n@@ -1,4 +1,4 @@\n import numpy as np\n def feature_l2_norms(matrix):\n     values = np.asarray(matrix, dtype=float)\n-    return np.sqrt(np.sum(values ** 2, axis=1))\n+    return np.sqrt(np.sum(values ** 2, axis=0))\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "array_ops/norms.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_returns_one_norm_per_feature",
+            "evidence": [
+              "tests/test_behavior.py::test_returns_one_norm_per_feature"
+            ],
+            "mechanism": "reduction uses the sample axis instead of the feature axis",
+            "next_change": "Compute one L2 norm per feature column for a two-dimensional sample matrix."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/array_ops/norms.py\n+++ b/array_ops/norms.py\n@@ -1,4 +1,4 @@\n import numpy as np\n def feature_l2_norms(matrix):\n     values = np.asarray(matrix, dtype=float)\n-    return np.sqrt(np.sum(values ** 2, axis=1))\n+    return np.sqrt(np.sum(values ** 2, axis=0))\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For numpy_shape_broadcasting, diagnose reduction uses the sample axis instead of the feature axis from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "array_ops/__init__.py": "",
+        "array_ops/norms.py": "import numpy as np\ndef feature_l2_norms(matrix):\n    values = np.asarray(matrix, dtype=float)\n    return np.sqrt(np.sum(values ** 2, axis=1))\n",
+        "tests/test_behavior.py": "import numpy as np\nfrom array_ops.norms import feature_l2_norms\ndef test_returns_one_norm_per_feature():\n    result = feature_l2_norms([[3, 0], [4, 12]])\n    np.testing.assert_allclose(result, [5, 12])\ndef test_output_shape_tracks_columns():\n    assert feature_l2_norms(np.ones((2, 3))).shape == (3,)\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import numpy as np\nfrom array_ops.norms import feature_l2_norms\ndef test_evaluator_single_row():\n    np.testing.assert_allclose(feature_l2_norms([[-3, 4]]), [3, 4])\ndef test_evaluator_zero_column():\n    np.testing.assert_allclose(feature_l2_norms([[0, 1], [0, 2]]), [0, np.sqrt(5)])\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_102",
+      "issue": "Softmax must normalize each row independently and remain stable for large logits.\n",
+      "metadata": {
+        "task_id": "numpy_softmax_102",
+        "title": "Row-wise stable softmax",
+        "repository": "array-ops-heldout",
+        "category": "numpy_shape_broadcasting",
+        "difficulty": "medium",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "softmax uses global rather than row-wise normalization",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "numpy",
+          "broadcasting",
+          "softmax",
+          "axis"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/array_ops/softmax.py\n+++ b/array_ops/softmax.py\n@@ -1,6 +1,6 @@\n import numpy as np\n def softmax_rows(logits):\n     values = np.asarray(logits, dtype=float)\n-    shifted = values - values.max()\n+    shifted = values - values.max(axis=1, keepdims=True)\n     exponentials = np.exp(shifted)\n-    return exponentials / exponentials.sum()\n+    return exponentials / exponentials.sum(axis=1, keepdims=True)\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "array_ops/softmax.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_each_row_sums_to_one",
+            "evidence": [
+              "tests/test_behavior.py::test_each_row_sums_to_one"
+            ],
+            "mechanism": "softmax uses global rather than row-wise normalization",
+            "next_change": "Softmax must normalize each row independently and remain stable for large logits."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/array_ops/softmax.py\n+++ b/array_ops/softmax.py\n@@ -1,6 +1,6 @@\n import numpy as np\n def softmax_rows(logits):\n     values = np.asarray(logits, dtype=float)\n-    shifted = values - values.max()\n+    shifted = values - values.max(axis=1, keepdims=True)\n     exponentials = np.exp(shifted)\n-    return exponentials / exponentials.sum()\n+    return exponentials / exponentials.sum(axis=1, keepdims=True)\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For numpy_shape_broadcasting, diagnose softmax uses global rather than row-wise normalization from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "array_ops/__init__.py": "",
+        "array_ops/softmax.py": "import numpy as np\ndef softmax_rows(logits):\n    values = np.asarray(logits, dtype=float)\n    shifted = values - values.max()\n    exponentials = np.exp(shifted)\n    return exponentials / exponentials.sum()\n",
+        "tests/test_behavior.py": "import numpy as np\nfrom array_ops.softmax import softmax_rows\ndef test_each_row_sums_to_one():\n    result = softmax_rows([[1, 2], [3, 4]])\n    np.testing.assert_allclose(result.sum(axis=1), [1, 1])\ndef test_large_logits_are_finite():\n    assert np.isfinite(softmax_rows([[1000, 1001]])).all()\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import numpy as np\nfrom array_ops.softmax import softmax_rows\ndef test_evaluator_translation_invariance_per_row():\n    base = np.array([[1., 2.], [4., 8.]])\n    shifts = np.array([[100.], [-50.]])\n    np.testing.assert_allclose(softmax_rows(base), softmax_rows(base + shifts))\ndef test_evaluator_shape_preserved():\n    assert softmax_rows(np.zeros((4, 3))).shape == (4, 3)\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_103",
+      "issue": "For NCHW image batches, return one spatial mean per batch item and channel with shape (N, C).\n",
+      "metadata": {
+        "task_id": "tensor_dims_103",
+        "title": "Spatial channel means",
+        "repository": "tensor-shapes-heldout",
+        "category": "bad_tensor_dimensions",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "mean reduces the channel dimension and leaves a spatial dimension",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "tensor",
+          "nchw",
+          "dimensions",
+          "numpy"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/tensor_shapes/images.py\n+++ b/tensor_shapes/images.py\n@@ -1,4 +1,4 @@\n import numpy as np\n def spatial_channel_mean(images):\n     values = np.asarray(images, dtype=float)\n-    return values.mean(axis=(1, 2))\n+    return values.mean(axis=(2, 3))\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "tensor_shapes/images.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_output_is_batch_by_channel",
+            "evidence": [
+              "tests/test_behavior.py::test_output_is_batch_by_channel"
+            ],
+            "mechanism": "mean reduces the channel dimension and leaves a spatial dimension",
+            "next_change": "For NCHW image batches, return one spatial mean per batch item and channel with shape (N, C)."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/tensor_shapes/images.py\n+++ b/tensor_shapes/images.py\n@@ -1,4 +1,4 @@\n import numpy as np\n def spatial_channel_mean(images):\n     values = np.asarray(images, dtype=float)\n-    return values.mean(axis=(1, 2))\n+    return values.mean(axis=(2, 3))\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For bad_tensor_dimensions, diagnose mean reduces the channel dimension and leaves a spatial dimension from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "tensor_shapes/__init__.py": "",
+        "tensor_shapes/images.py": "import numpy as np\ndef spatial_channel_mean(images):\n    values = np.asarray(images, dtype=float)\n    return values.mean(axis=(1, 2))\n",
+        "tests/test_behavior.py": "import numpy as np\nfrom tensor_shapes.images import spatial_channel_mean\ndef test_output_is_batch_by_channel():\n    assert spatial_channel_mean(np.ones((2, 3, 4, 5))).shape == (2, 3)\ndef test_channel_values_are_independent():\n    image = np.stack([np.ones((2, 2)), np.full((2, 2), 7)])[None, ...]\n    np.testing.assert_allclose(spatial_channel_mean(image), [[1, 7]])\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import numpy as np\nfrom tensor_shapes.images import spatial_channel_mean\ndef test_evaluator_non_square_spatial_axes():\n    data = np.arange(24).reshape(1, 2, 3, 4)\n    np.testing.assert_allclose(spatial_channel_mean(data), data.mean(axis=(2, 3)))\ndef test_evaluator_dtype_is_floating():\n    assert spatial_channel_mean(np.ones((1, 1, 1, 1), dtype=int)).dtype.kind == 'f'\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_104",
+      "issue": "Fit one-hot categories on training rows only. Test-only categories must not create new feature columns.\n",
+      "metadata": {
+        "task_id": "pandas_category_leak_104",
+        "title": "Train-fitted one-hot categories",
+        "repository": "tabular-heldout",
+        "category": "pandas_data_leakage",
+        "difficulty": "hard",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "test-only categories leak into the fitted feature space",
+        "dependencies": [
+          "pandas>=2.2",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "pandas",
+          "one-hot",
+          "leakage",
+          "categories"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/tabular/encoding.py\n+++ b/tabular/encoding.py\n@@ -1,5 +1,9 @@\n import pandas as pd\n def encode_splits(train, test, column):\n-    combined = pd.concat([train[[column]], test[[column]]], ignore_index=True)\n-    encoded = pd.get_dummies(combined[column], prefix=column, dtype=int)\n-    return encoded.iloc[:len(train)].reset_index(drop=True), encoded.iloc[len(train):].reset_index(drop=True)\n+    categories = list(pd.Index(train[column].dropna().unique()))\n+    train_values = pd.Categorical(train[column], categories=categories)\n+    test_values = pd.Categorical(test[column], categories=categories)\n+    columns = [f\"{column}_{value}\" for value in categories]\n+    train_encoded = pd.get_dummies(train_values, prefix=column, dtype=int).reindex(columns=columns, fill_value=0)\n+    test_encoded = pd.get_dummies(test_values, prefix=column, dtype=int).reindex(columns=columns, fill_value=0)\n+    return train_encoded.reset_index(drop=True), test_encoded.reset_index(drop=True)\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "tabular/encoding.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_test_only_category_does_not_create_column",
+            "evidence": [
+              "tests/test_behavior.py::test_test_only_category_does_not_create_column"
+            ],
+            "mechanism": "test-only categories leak into the fitted feature space",
+            "next_change": "Fit one-hot categories on training rows only. Test-only categories must not create new feature columns."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/tabular/encoding.py\n+++ b/tabular/encoding.py\n@@ -1,5 +1,9 @@\n import pandas as pd\n def encode_splits(train, test, column):\n-    combined = pd.concat([train[[column]], test[[column]]], ignore_index=True)\n-    encoded = pd.get_dummies(combined[column], prefix=column, dtype=int)\n-    return encoded.iloc[:len(train)].reset_index(drop=True), encoded.iloc[len(train):].reset_index(drop=True)\n+    categories = list(pd.Index(train[column].dropna().unique()))\n+    train_values = pd.Categorical(train[column], categories=categories)\n+    test_values = pd.Categorical(test[column], categories=categories)\n+    columns = [f\"{column}_{value}\" for value in categories]\n+    train_encoded = pd.get_dummies(train_values, prefix=column, dtype=int).reindex(columns=columns, fill_value=0)\n+    test_encoded = pd.get_dummies(test_values, prefix=column, dtype=int).reindex(columns=columns, fill_value=0)\n+    return train_encoded.reset_index(drop=True), test_encoded.reset_index(drop=True)\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For pandas_data_leakage, diagnose test-only categories leak into the fitted feature space from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "tabular/__init__.py": "",
+        "tabular/encoding.py": "import pandas as pd\ndef encode_splits(train, test, column):\n    combined = pd.concat([train[[column]], test[[column]]], ignore_index=True)\n    encoded = pd.get_dummies(combined[column], prefix=column, dtype=int)\n    return encoded.iloc[:len(train)].reset_index(drop=True), encoded.iloc[len(train):].reset_index(drop=True)\n",
+        "tests/test_behavior.py": "import pandas as pd\nfrom tabular.encoding import encode_splits\ndef test_test_only_category_does_not_create_column():\n    train = pd.DataFrame({'color': ['red', 'blue']})\n    test = pd.DataFrame({'color': ['green']})\n    train_x, test_x = encode_splits(train, test, 'color')\n    assert set(train_x.columns) == {'color_red', 'color_blue'}\n    assert list(test_x.iloc[0]) == [0, 0]\ndef test_split_row_counts_are_preserved():\n    a, b = encode_splits(pd.DataFrame({'x':['a','b']}), pd.DataFrame({'x':['a']}), 'x')\n    assert (len(a), len(b)) == (2, 1)\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import pandas as pd\nfrom tabular.encoding import encode_splits\ndef test_evaluator_column_order_follows_training_observation():\n    train_x, _ = encode_splits(pd.DataFrame({'x':['z','a']}), pd.DataFrame({'x':['a']}), 'x')\n    assert list(train_x.columns) == ['x_z', 'x_a']\ndef test_evaluator_known_test_category_is_encoded():\n    _, test_x = encode_splits(pd.DataFrame({'x':['a','b']}), pd.DataFrame({'x':['b']}), 'x')\n    assert test_x['x_b'].iloc[0] == 1\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_105",
+      "issue": "Return feature columns without the named target column, while leaving the input frame unchanged.\n",
+      "metadata": {
+        "task_id": "target_leak_105",
+        "title": "Exclude target from model features",
+        "repository": "tabular-heldout",
+        "category": "data_split_mistakes",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "target values are included directly in the feature matrix",
+        "dependencies": [
+          "pandas>=2.2",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "pandas",
+          "target-leakage",
+          "features",
+          "split"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/tabular/features.py\n+++ b/tabular/features.py\n@@ -1,2 +1,2 @@\n def split_features_target(frame, target):\n-    return frame.copy(), frame[target].copy()\n+    return frame.drop(columns=[target]).copy(), frame[target].copy()\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "tabular/features.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_target_is_not_in_features",
+            "evidence": [
+              "tests/test_behavior.py::test_target_is_not_in_features"
+            ],
+            "mechanism": "target values are included directly in the feature matrix",
+            "next_change": "Return feature columns without the named target column, while leaving the input frame unchanged."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/tabular/features.py\n+++ b/tabular/features.py\n@@ -1,2 +1,2 @@\n def split_features_target(frame, target):\n-    return frame.copy(), frame[target].copy()\n+    return frame.drop(columns=[target]).copy(), frame[target].copy()\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For data_split_mistakes, diagnose target values are included directly in the feature matrix from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "tabular/__init__.py": "",
+        "tabular/features.py": "def split_features_target(frame, target):\n    return frame.copy(), frame[target].copy()\n",
+        "tests/test_behavior.py": "import pandas as pd\nfrom tabular.features import split_features_target\ndef test_target_is_not_in_features():\n    x, y = split_features_target(pd.DataFrame({'a':[1], 'label':[0]}), 'label')\n    assert list(x.columns) == ['a'] and y.tolist() == [0]\ndef test_input_is_not_mutated():\n    frame = pd.DataFrame({'a':[1], 'y':[2]}); before = frame.copy()\n    split_features_target(frame, 'y'); pd.testing.assert_frame_equal(frame, before)\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import pandas as pd\nfrom tabular.features import split_features_target\ndef test_evaluator_target_can_be_first_column():\n    x, _ = split_features_target(pd.DataFrame({'y':[1], 'x':[2]}), 'y')\n    assert list(x.columns) == ['x']\ndef test_evaluator_preserves_feature_order():\n    x, _ = split_features_target(pd.DataFrame({'b':[1], 'y':[0], 'a':[2]}), 'y')\n    assert list(x.columns) == ['b', 'a']\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_106",
+      "issue": "`binary_accuracy_from_logits` receives raw logits, so use the correct decision boundary and validate matching shapes.\n",
+      "metadata": {
+        "task_id": "classification_logits_106",
+        "title": "Binary accuracy from logits",
+        "repository": "metrics-heldout",
+        "category": "classification_metrics",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "raw logits are thresholded at 0.5 instead of zero",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "classification",
+          "logits",
+          "accuracy",
+          "metrics"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/heldout_metrics/classification.py\n+++ b/heldout_metrics/classification.py\n@@ -1,4 +1,8 @@\n import numpy as np\n def binary_accuracy_from_logits(logits, labels):\n-    predictions = np.asarray(logits) > 0.5\n-    return float(np.mean(predictions == np.asarray(labels)))\n+    scores = np.asarray(logits)\n+    targets = np.asarray(labels)\n+    if scores.shape != targets.shape:\n+        raise ValueError(\"logits and labels must have matching shapes\")\n+    predictions = scores > 0.0\n+    return float(np.mean(predictions == targets))\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "heldout_metrics/classification.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_zero_is_logit_decision_boundary",
+            "evidence": [
+              "tests/test_behavior.py::test_zero_is_logit_decision_boundary"
+            ],
+            "mechanism": "raw logits are thresholded at 0.5 instead of zero",
+            "next_change": "`binary_accuracy_from_logits` receives raw logits, so use the correct decision boundary and validate matching shapes."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/heldout_metrics/classification.py\n+++ b/heldout_metrics/classification.py\n@@ -1,4 +1,8 @@\n import numpy as np\n def binary_accuracy_from_logits(logits, labels):\n-    predictions = np.asarray(logits) > 0.5\n-    return float(np.mean(predictions == np.asarray(labels)))\n+    scores = np.asarray(logits)\n+    targets = np.asarray(labels)\n+    if scores.shape != targets.shape:\n+        raise ValueError(\"logits and labels must have matching shapes\")\n+    predictions = scores > 0.0\n+    return float(np.mean(predictions == targets))\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For classification_metrics, diagnose raw logits are thresholded at 0.5 instead of zero from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "heldout_metrics/__init__.py": "",
+        "heldout_metrics/classification.py": "import numpy as np\ndef binary_accuracy_from_logits(logits, labels):\n    predictions = np.asarray(logits) > 0.5\n    return float(np.mean(predictions == np.asarray(labels)))\n",
+        "tests/test_behavior.py": "import numpy as np\nimport pytest\nfrom heldout_metrics.classification import binary_accuracy_from_logits\ndef test_zero_is_logit_decision_boundary():\n    assert binary_accuracy_from_logits(np.array([0.2, -0.2]), np.array([1, 0])) == 1.0\ndef test_shape_mismatch_is_rejected():\n    with pytest.raises(ValueError): binary_accuracy_from_logits(np.array([1,2]), np.array([1]))\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import numpy as np\nfrom heldout_metrics.classification import binary_accuracy_from_logits\ndef test_evaluator_negative_logits_predict_zero():\n    assert binary_accuracy_from_logits(np.array([-9., -0.01]), np.array([0,0])) == 1.0\ndef test_evaluator_returns_float():\n    assert isinstance(binary_accuracy_from_logits(np.array([1]), np.array([1])), float)\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_107",
+      "issue": "The `mae` function calculates a root-mean-square quantity. Implement mean absolute error and reject shape mismatches.\n",
+      "metadata": {
+        "task_id": "regression_mae_107",
+        "title": "Mean absolute error",
+        "repository": "metrics-heldout",
+        "category": "regression_metrics",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "function computes RMSE instead of mean absolute error",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "regression",
+          "mae",
+          "metrics",
+          "numpy"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/heldout_metrics/regression.py\n+++ b/heldout_metrics/regression.py\n@@ -1,4 +1,7 @@\n import numpy as np\n def mae(y_true, y_pred):\n-    errors = np.asarray(y_true) - np.asarray(y_pred)\n-    return float(np.sqrt(np.mean(errors ** 2)))\n+    truth = np.asarray(y_true)\n+    prediction = np.asarray(y_pred)\n+    if truth.shape != prediction.shape:\n+        raise ValueError(\"inputs must have matching shapes\")\n+    return float(np.mean(np.abs(truth - prediction)))\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "heldout_metrics/regression.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_mae_uses_absolute_errors",
+            "evidence": [
+              "tests/test_behavior.py::test_mae_uses_absolute_errors"
+            ],
+            "mechanism": "function computes RMSE instead of mean absolute error",
+            "next_change": "The `mae` function calculates a root-mean-square quantity. Implement mean absolute error and reject shape mismatches."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/heldout_metrics/regression.py\n+++ b/heldout_metrics/regression.py\n@@ -1,4 +1,7 @@\n import numpy as np\n def mae(y_true, y_pred):\n-    errors = np.asarray(y_true) - np.asarray(y_pred)\n-    return float(np.sqrt(np.mean(errors ** 2)))\n+    truth = np.asarray(y_true)\n+    prediction = np.asarray(y_pred)\n+    if truth.shape != prediction.shape:\n+        raise ValueError(\"inputs must have matching shapes\")\n+    return float(np.mean(np.abs(truth - prediction)))\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For regression_metrics, diagnose function computes rmse instead of mean absolute error from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "heldout_metrics/__init__.py": "",
+        "heldout_metrics/regression.py": "import numpy as np\ndef mae(y_true, y_pred):\n    errors = np.asarray(y_true) - np.asarray(y_pred)\n    return float(np.sqrt(np.mean(errors ** 2)))\n",
+        "tests/test_behavior.py": "import pytest\nfrom heldout_metrics.regression import mae\ndef test_mae_uses_absolute_errors():\n    assert mae([0, 0], [3, 4]) == 3.5\ndef test_shape_mismatch_rejected():\n    with pytest.raises(ValueError): mae([1,2], [1])\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "from heldout_metrics.regression import mae\ndef test_evaluator_signed_errors_do_not_cancel():\n    assert mae([0, 2], [1, 1]) == 1.0\ndef test_evaluator_exact_prediction():\n    assert mae([1.5], [1.5]) == 0.0\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_108",
+      "issue": "Compute unweighted macro F1 across every class present in truth or predictions, with zero for undefined class F1.\n",
+      "metadata": {
+        "task_id": "macro_f1_108",
+        "title": "Macro-averaged multiclass F1",
+        "repository": "metrics-heldout",
+        "category": "classification_metrics",
+        "difficulty": "hard",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "implementation reports accuracy instead of per-class macro F1",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "classification",
+          "f1",
+          "macro",
+          "imbalance"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/heldout_metrics/macro_f1.py\n+++ b/heldout_metrics/macro_f1.py\n@@ -1,4 +1,12 @@\n import numpy as np\n def macro_f1(y_true, y_pred):\n     truth, pred = np.asarray(y_true), np.asarray(y_pred)\n-    return float(np.mean(truth == pred))\n+    classes = np.union1d(truth, pred)\n+    scores = []\n+    for label in classes:\n+        tp = np.sum((truth == label) & (pred == label))\n+        fp = np.sum((truth != label) & (pred == label))\n+        fn = np.sum((truth == label) & (pred != label))\n+        denominator = 2 * tp + fp + fn\n+        scores.append(0.0 if denominator == 0 else 2 * tp / denominator)\n+    return float(np.mean(scores)) if scores else 0.0\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "heldout_metrics/macro_f1.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_macro_f1_differs_from_accuracy_for_imbalance",
+            "evidence": [
+              "tests/test_behavior.py::test_macro_f1_differs_from_accuracy_for_imbalance"
+            ],
+            "mechanism": "implementation reports accuracy instead of per-class macro F1",
+            "next_change": "Compute unweighted macro F1 across every class present in truth or predictions, with zero for undefined class F1."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/heldout_metrics/macro_f1.py\n+++ b/heldout_metrics/macro_f1.py\n@@ -1,4 +1,12 @@\n import numpy as np\n def macro_f1(y_true, y_pred):\n     truth, pred = np.asarray(y_true), np.asarray(y_pred)\n-    return float(np.mean(truth == pred))\n+    classes = np.union1d(truth, pred)\n+    scores = []\n+    for label in classes:\n+        tp = np.sum((truth == label) & (pred == label))\n+        fp = np.sum((truth != label) & (pred == label))\n+        fn = np.sum((truth == label) & (pred != label))\n+        denominator = 2 * tp + fp + fn\n+        scores.append(0.0 if denominator == 0 else 2 * tp / denominator)\n+    return float(np.mean(scores)) if scores else 0.0\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For classification_metrics, diagnose implementation reports accuracy instead of per-class macro f1 from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "heldout_metrics/__init__.py": "",
+        "heldout_metrics/macro_f1.py": "import numpy as np\ndef macro_f1(y_true, y_pred):\n    truth, pred = np.asarray(y_true), np.asarray(y_pred)\n    return float(np.mean(truth == pred))\n",
+        "tests/test_behavior.py": "import pytest\nfrom heldout_metrics.macro_f1 import macro_f1\ndef test_macro_f1_differs_from_accuracy_for_imbalance():\n    assert macro_f1([0,0,0,1], [0,0,0,0]) == pytest.approx(3/7)\ndef test_perfect_predictions_score_one():\n    assert macro_f1([0,1,2], [0,1,2]) == 1.0\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import pytest\nfrom heldout_metrics.macro_f1 import macro_f1\ndef test_evaluator_includes_predicted_only_class():\n    assert macro_f1([0,0], [0,2]) == pytest.approx((2/3 + 0)/2)\ndef test_evaluator_empty_inputs_return_zero():\n    assert macro_f1([], []) == 0.0\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_109",
+      "issue": "Set the model to training mode exactly once before processing the epoch's batches.\n",
+      "metadata": {
+        "task_id": "pytorch_train_mode_109",
+        "title": "Activate training mode for an epoch",
+        "repository": "torch-loops-heldout",
+        "category": "pytorch_training_loop",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "training loop never calls model.train()",
+        "dependencies": [
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "pytorch",
+          "train-mode",
+          "dropout",
+          "batchnorm"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/torch_loops/train_mode.py\n+++ b/torch_loops/train_mode.py\n@@ -1,4 +1,5 @@\n def train_epoch(model, batches, update_batch):\n+    model.train()\n     losses = []\n     for batch in batches:\n         losses.append(update_batch(model, batch))\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "torch_loops/train_mode.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_model_enters_train_mode_once",
+            "evidence": [
+              "tests/test_behavior.py::test_model_enters_train_mode_once"
+            ],
+            "mechanism": "training loop never calls model.train()",
+            "next_change": "Set the model to training mode exactly once before processing the epoch's batches."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/torch_loops/train_mode.py\n+++ b/torch_loops/train_mode.py\n@@ -1,4 +1,5 @@\n def train_epoch(model, batches, update_batch):\n+    model.train()\n     losses = []\n     for batch in batches:\n         losses.append(update_batch(model, batch))\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For pytorch_training_loop, diagnose training loop never calls model.train() from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "tests/test_behavior.py": "from torch_loops.train_mode import train_epoch\nclass Model:\n    def __init__(self): self.train_calls = 0\n    def train(self): self.train_calls += 1\ndef test_model_enters_train_mode_once():\n    model = Model(); train_epoch(model, [1,2], lambda m,b: b)\n    assert model.train_calls == 1\ndef test_returns_one_loss_per_batch():\n    assert train_epoch(Model(), [1,2], lambda m,b: b * 2) == [2,4]\n",
+        "torch_loops/__init__.py": "",
+        "torch_loops/train_mode.py": "def train_epoch(model, batches, update_batch):\n    losses = []\n    for batch in batches:\n        losses.append(update_batch(model, batch))\n    return losses\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "from torch_loops.train_mode import train_epoch\nclass Model:\n    def __init__(self): self.events=[]\n    def train(self): self.events.append('train')\ndef test_evaluator_mode_set_before_first_update():\n    model=Model(); train_epoch(model,[1],lambda m,b: m.events.append('update') or 0)\n    assert model.events == ['train','update']\ndef test_evaluator_empty_epoch_still_sets_mode():\n    model=Model(); assert train_epoch(model,[],lambda m,b: 0)==[] and model.events==['train']\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_110",
+      "issue": "Evaluation must call `model.eval()` and process every batch inside the supplied `no_grad` context manager.\n",
+      "metadata": {
+        "task_id": "pytorch_eval_mode_110",
+        "title": "Evaluation mode and no-grad context",
+        "repository": "torch-loops-heldout",
+        "category": "pytorch_training_loop",
+        "difficulty": "medium",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "evaluation uses training mode and tracks gradients",
+        "dependencies": [
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "pytorch",
+          "eval-mode",
+          "no-grad",
+          "inference"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/torch_loops/evaluation.py\n+++ b/torch_loops/evaluation.py\n@@ -1,3 +1,4 @@\n def evaluate(model, batches, score_batch, no_grad):\n-    model.train()\n-    return [score_batch(model, batch) for batch in batches]\n+    model.eval()\n+    with no_grad():\n+        return [score_batch(model, batch) for batch in batches]\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "torch_loops/evaluation.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_uses_eval_mode_and_no_grad",
+            "evidence": [
+              "tests/test_behavior.py::test_uses_eval_mode_and_no_grad"
+            ],
+            "mechanism": "evaluation uses training mode and tracks gradients",
+            "next_change": "Evaluation must call `model.eval()` and process every batch inside the supplied `no_grad` context manager."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/torch_loops/evaluation.py\n+++ b/torch_loops/evaluation.py\n@@ -1,3 +1,4 @@\n def evaluate(model, batches, score_batch, no_grad):\n-    model.train()\n-    return [score_batch(model, batch) for batch in batches]\n+    model.eval()\n+    with no_grad():\n+        return [score_batch(model, batch) for batch in batches]\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For pytorch_training_loop, diagnose evaluation uses training mode and tracks gradients from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "tests/test_behavior.py": "from contextlib import contextmanager\nfrom torch_loops.evaluation import evaluate\nclass Model:\n    def __init__(self): self.mode=None\n    def train(self): self.mode='train'\n    def eval(self): self.mode='eval'\ndef test_uses_eval_mode_and_no_grad():\n    events=[]\n    @contextmanager\n    def no_grad(): events.append('enter'); yield; events.append('exit')\n    model=Model(); evaluate(model,[1],lambda m,b: events.append('score') or b,no_grad)\n    assert model.mode=='eval' and events==['enter','score','exit']\ndef test_returns_scores():\n    @contextmanager\n    def no_grad(): yield\n    assert evaluate(Model(),[2,3],lambda m,b:b+1,no_grad)==[3,4]\n",
+        "torch_loops/__init__.py": "",
+        "torch_loops/evaluation.py": "def evaluate(model, batches, score_batch, no_grad):\n    model.train()\n    return [score_batch(model, batch) for batch in batches]\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "from contextlib import contextmanager\nfrom torch_loops.evaluation import evaluate\nclass Model:\n    def __init__(self): self.events=[]\n    def train(self): self.events.append('train')\n    def eval(self): self.events.append('eval')\ndef test_evaluator_eval_precedes_context():\n    model=Model()\n    @contextmanager\n    def no_grad(): model.events.append('enter'); yield\n    evaluate(model,[],lambda m,b:0,no_grad)\n    assert model.events==['eval','enter']\ndef test_evaluator_context_exits_on_error():\n    events=[]\n    @contextmanager\n    def no_grad():\n        events.append('enter')\n        try: yield\n        finally: events.append('exit')\n    try: evaluate(Model(),[1],lambda m,b: (_ for _ in ()).throw(RuntimeError()),no_grad)\n    except RuntimeError: pass\n    assert events==['enter','exit']\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_111",
+      "issue": "Clear gradients before forward/backward, then step after backward. Preserve the returned loss.\n",
+      "metadata": {
+        "task_id": "gradient_order_111",
+        "title": "Optimizer operation order",
+        "repository": "torch-loops-heldout",
+        "category": "incorrect_gradient_handling",
+        "difficulty": "medium",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "zero_grad is called after backward and erases current gradients",
+        "dependencies": [
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "pytorch",
+          "gradient",
+          "zero-grad",
+          "ordering"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/torch_loops/gradient_order.py\n+++ b/torch_loops/gradient_order.py\n@@ -1,6 +1,6 @@\n def optimize_batch(model, batch, optimizer, loss_fn):\n+    optimizer.zero_grad()\n     loss = loss_fn(model(batch))\n     loss.backward()\n-    optimizer.zero_grad()\n     optimizer.step()\n     return loss\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "torch_loops/gradient_order.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_gradient_operation_order",
+            "evidence": [
+              "tests/test_behavior.py::test_gradient_operation_order"
+            ],
+            "mechanism": "zero_grad is called after backward and erases current gradients",
+            "next_change": "Clear gradients before forward/backward, then step after backward. Preserve the returned loss."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/torch_loops/gradient_order.py\n+++ b/torch_loops/gradient_order.py\n@@ -1,6 +1,6 @@\n def optimize_batch(model, batch, optimizer, loss_fn):\n+    optimizer.zero_grad()\n     loss = loss_fn(model(batch))\n     loss.backward()\n-    optimizer.zero_grad()\n     optimizer.step()\n     return loss\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For incorrect_gradient_handling, diagnose zero_grad is called after backward and erases current gradients from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "tests/test_behavior.py": "from torch_loops.gradient_order import optimize_batch\nclass Optimizer:\n    def __init__(self,e): self.e=e\n    def zero_grad(self): self.e.append('zero')\n    def step(self): self.e.append('step')\nclass Loss:\n    def __init__(self,e): self.e=e\n    def backward(self): self.e.append('backward')\ndef test_gradient_operation_order():\n    e=[]; optimize_batch(lambda x:e.append('forward') or x,1,Optimizer(e),lambda x:Loss(e))\n    assert e==['zero','forward','backward','step']\ndef test_returns_loss():\n    e=[]; loss=Loss(e)\n    assert optimize_batch(lambda x:x,1,Optimizer(e),lambda x:loss) is loss\n",
+        "torch_loops/__init__.py": "",
+        "torch_loops/gradient_order.py": "def optimize_batch(model, batch, optimizer, loss_fn):\n    loss = loss_fn(model(batch))\n    loss.backward()\n    optimizer.zero_grad()\n    optimizer.step()\n    return loss\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "from torch_loops.gradient_order import optimize_batch\nclass O:\n    def __init__(self): self.zero=0; self.steps=0\n    def zero_grad(self): self.zero+=1\n    def step(self): self.steps+=1\nclass L:\n    def backward(self): pass\ndef test_evaluator_one_clear_and_step():\n    o=O(); optimize_batch(lambda x:x,0,o,lambda x:L()); assert (o.zero,o.steps)==(1,1)\ndef test_evaluator_batch_reaches_model():\n    seen=[]; optimize_batch(lambda x:seen.append(x) or x,9,O(),lambda x:L()); assert seen==[9]\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_112",
+      "issue": "Accumulate gradients for `accumulation_steps` batches: clear at each window start and step at each full window or final partial window.\n",
+      "metadata": {
+        "task_id": "gradient_accumulation_112",
+        "title": "Gradient accumulation windows",
+        "repository": "torch-loops-heldout",
+        "category": "incorrect_gradient_handling",
+        "difficulty": "hard",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "optimizer clears and steps every batch instead of per accumulation window",
+        "dependencies": [
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "pytorch",
+          "gradient-accumulation",
+          "optimizer",
+          "batch"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/torch_loops/accumulation.py\n+++ b/torch_loops/accumulation.py\n@@ -1,5 +1,10 @@\n def train_accumulated(batches, optimizer, backward_batch, accumulation_steps):\n-    for batch in batches:\n-        optimizer.zero_grad()\n+    if accumulation_steps < 1:\n+        raise ValueError(\"accumulation_steps must be positive\")\n+    total = len(batches)\n+    for index, batch in enumerate(batches):\n+        if index % accumulation_steps == 0:\n+            optimizer.zero_grad()\n         backward_batch(batch)\n-        optimizer.step()\n+        if (index + 1) % accumulation_steps == 0 or index + 1 == total:\n+            optimizer.step()\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "torch_loops/accumulation.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_two_batch_windows",
+            "evidence": [
+              "tests/test_behavior.py::test_two_batch_windows"
+            ],
+            "mechanism": "optimizer clears and steps every batch instead of per accumulation window",
+            "next_change": "Accumulate gradients for `accumulation_steps` batches: clear at each window start and step at each full window or final partial window."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/torch_loops/accumulation.py\n+++ b/torch_loops/accumulation.py\n@@ -1,5 +1,10 @@\n def train_accumulated(batches, optimizer, backward_batch, accumulation_steps):\n-    for batch in batches:\n-        optimizer.zero_grad()\n+    if accumulation_steps < 1:\n+        raise ValueError(\"accumulation_steps must be positive\")\n+    total = len(batches)\n+    for index, batch in enumerate(batches):\n+        if index % accumulation_steps == 0:\n+            optimizer.zero_grad()\n         backward_batch(batch)\n-        optimizer.step()\n+        if (index + 1) % accumulation_steps == 0 or index + 1 == total:\n+            optimizer.step()\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For incorrect_gradient_handling, diagnose optimizer clears and steps every batch instead of per accumulation window from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "tests/test_behavior.py": "import pytest\nfrom torch_loops.accumulation import train_accumulated\nclass O:\n    def __init__(self,e): self.e=e\n    def zero_grad(self): self.e.append('zero')\n    def step(self): self.e.append('step')\ndef test_two_batch_windows():\n    e=[]; train_accumulated([1,2,3],O(e),lambda b:e.append(f'b{b}'),2)\n    assert e==['zero','b1','b2','step','zero','b3','step']\ndef test_rejects_nonpositive_window():\n    with pytest.raises(ValueError): train_accumulated([],O([]),lambda b:None,0)\n",
+        "torch_loops/__init__.py": "",
+        "torch_loops/accumulation.py": "def train_accumulated(batches, optimizer, backward_batch, accumulation_steps):\n    for batch in batches:\n        optimizer.zero_grad()\n        backward_batch(batch)\n        optimizer.step()\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "from torch_loops.accumulation import train_accumulated\nclass O:\n    def __init__(self): self.zeros=0; self.steps=0\n    def zero_grad(self): self.zeros+=1\n    def step(self): self.steps+=1\ndef test_evaluator_exact_full_windows():\n    o=O(); train_accumulated([1,2,3,4],o,lambda b:None,2); assert (o.zeros,o.steps)==(2,2)\ndef test_evaluator_empty_batches_do_nothing():\n    o=O(); train_accumulated([],o,lambda b:None,2); assert (o.zeros,o.steps)==(0,0)\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_113",
+      "issue": "Move the model and every tensor in the batch tuple to the selected device before returning them.\n",
+      "metadata": {
+        "task_id": "device_nested_113",
+        "title": "Move model and nested batch tensors",
+        "repository": "tensor-runtime-heldout",
+        "category": "device_dtype_mismatch",
+        "difficulty": "medium",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "model is moved but nested batch tensors remain on the host device",
+        "dependencies": [
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "pytorch",
+          "device",
+          "model",
+          "batch"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/tensor_runtime/device.py\n+++ b/tensor_runtime/device.py\n@@ -1,2 +1,2 @@\n def prepare(model, batch, device):\n-    return model.to(device), batch\n+    return model.to(device), tuple(tensor.to(device) for tensor in batch)\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "tensor_runtime/device.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_model_and_batch_share_device",
+            "evidence": [
+              "tests/test_behavior.py::test_model_and_batch_share_device"
+            ],
+            "mechanism": "model is moved but nested batch tensors remain on the host device",
+            "next_change": "Move the model and every tensor in the batch tuple to the selected device before returning them."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/tensor_runtime/device.py\n+++ b/tensor_runtime/device.py\n@@ -1,2 +1,2 @@\n def prepare(model, batch, device):\n-    return model.to(device), batch\n+    return model.to(device), tuple(tensor.to(device) for tensor in batch)\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For device_dtype_mismatch, diagnose model is moved but nested batch tensors remain on the host device from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "tensor_runtime/__init__.py": "",
+        "tensor_runtime/device.py": "def prepare(model, batch, device):\n    return model.to(device), batch\n",
+        "tests/test_behavior.py": "from tensor_runtime.device import prepare\nclass Movable:\n    def __init__(self): self.device=None\n    def to(self,d): self.device=d; return self\ndef test_model_and_batch_share_device():\n    m,x,y=Movable(),Movable(),Movable(); prepared=prepare(m,(x,y),'cuda')\n    assert m.device==x.device==y.device=='cuda' and prepared==(m,(x,y))\ndef test_batch_tuple_type_preserved():\n    m,x=Movable(),Movable(); assert isinstance(prepare(m,(x,),'cpu')[1],tuple)\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "from tensor_runtime.device import prepare\nclass T:\n    def __init__(self): self.calls=[]\n    def to(self,d): self.calls.append(d); return self\ndef test_evaluator_each_object_moves_once():\n    objects=[T(),T(),T()]; prepare(objects[0],tuple(objects[1:]),'mps'); assert [o.calls for o in objects]==[['mps'],['mps'],['mps']]\ndef test_evaluator_empty_batch_supported():\n    model=T(); assert prepare(model,tuple(),'cpu')==(model,tuple())\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_114",
+      "issue": "Prepare class-index targets for cross-entropy by converting them to long integer dtype.\n",
+      "metadata": {
+        "task_id": "dtype_labels_114",
+        "title": "Integer class-label dtype",
+        "repository": "tensor-runtime-heldout",
+        "category": "device_dtype_mismatch",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "class-index targets are converted to floating rather than long dtype",
+        "dependencies": [
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "pytorch",
+          "dtype",
+          "cross-entropy",
+          "labels"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/tensor_runtime/labels.py\n+++ b/tensor_runtime/labels.py\n@@ -1,2 +1,2 @@\n def prepare_class_labels(labels):\n-    return labels.float()\n+    return labels.long()\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "tensor_runtime/labels.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_labels_are_long_integers",
+            "evidence": [
+              "tests/test_behavior.py::test_labels_are_long_integers"
+            ],
+            "mechanism": "class-index targets are converted to floating rather than long dtype",
+            "next_change": "Prepare class-index targets for cross-entropy by converting them to long integer dtype."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/tensor_runtime/labels.py\n+++ b/tensor_runtime/labels.py\n@@ -1,2 +1,2 @@\n def prepare_class_labels(labels):\n-    return labels.float()\n+    return labels.long()\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For device_dtype_mismatch, diagnose class-index targets are converted to floating rather than long dtype from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "tensor_runtime/__init__.py": "",
+        "tensor_runtime/labels.py": "def prepare_class_labels(labels):\n    return labels.float()\n",
+        "tests/test_behavior.py": "from tensor_runtime.labels import prepare_class_labels\nclass Labels:\n    def __init__(self): self.dtype='initial'\n    def float(self): self.dtype='float'; return self\n    def long(self): self.dtype='long'; return self\ndef test_labels_are_long_integers():\n    labels=Labels(); assert prepare_class_labels(labels) is labels and labels.dtype=='long'\ndef test_conversion_happens_once():\n    class L(Labels):\n        def __init__(self): super().__init__(); self.calls=0\n        def long(self): self.calls+=1; return super().long()\n    labels=L(); prepare_class_labels(labels); assert labels.calls==1\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "from tensor_runtime.labels import prepare_class_labels\nclass L:\n    def __init__(self): self.used=[]\n    def float(self): self.used.append('float'); return self\n    def long(self): self.used.append('long'); return self\ndef test_evaluator_never_calls_float():\n    labels=L(); prepare_class_labels(labels); assert labels.used==['long']\ndef test_evaluator_identity_returned():\n    labels=L(); assert prepare_class_labels(labels) is labels\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_115",
+      "issue": "Implement finite log-sum-exp for large one-dimensional values using a stable shift.\n",
+      "metadata": {
+        "task_id": "stable_logsumexp_115",
+        "title": "Overflow-safe log-sum-exp",
+        "repository": "numerics-heldout",
+        "category": "numerical_stability",
+        "difficulty": "medium",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "direct exponentiation overflows for large inputs",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "numpy",
+          "overflow",
+          "logsumexp",
+          "numerical-stability"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/numerics/logsumexp.py\n+++ b/numerics/logsumexp.py\n@@ -1,4 +1,5 @@\n import numpy as np\n def logsumexp(values):\n     data = np.asarray(values, dtype=float)\n-    return float(np.log(np.exp(data).sum()))\n+    maximum = data.max()\n+    return float(maximum + np.log(np.exp(data - maximum).sum()))\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "numerics/logsumexp.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_large_values_remain_finite",
+            "evidence": [
+              "tests/test_behavior.py::test_large_values_remain_finite"
+            ],
+            "mechanism": "direct exponentiation overflows for large inputs",
+            "next_change": "Implement finite log-sum-exp for large one-dimensional values using a stable shift."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/numerics/logsumexp.py\n+++ b/numerics/logsumexp.py\n@@ -1,4 +1,5 @@\n import numpy as np\n def logsumexp(values):\n     data = np.asarray(values, dtype=float)\n-    return float(np.log(np.exp(data).sum()))\n+    maximum = data.max()\n+    return float(maximum + np.log(np.exp(data - maximum).sum()))\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For numerical_stability, diagnose direct exponentiation overflows for large inputs from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "numerics/__init__.py": "",
+        "numerics/logsumexp.py": "import numpy as np\ndef logsumexp(values):\n    data = np.asarray(values, dtype=float)\n    return float(np.log(np.exp(data).sum()))\n",
+        "tests/test_behavior.py": "import numpy as np\nfrom numerics.logsumexp import logsumexp\ndef test_large_values_remain_finite():\n    assert np.isfinite(logsumexp([1000.0,1001.0]))\ndef test_typical_values_match_direct_formula():\n    assert logsumexp([0.,1.]) == np.log(1 + np.e)\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import numpy as np\nfrom numerics.logsumexp import logsumexp\ndef test_evaluator_translation_identity():\n    np.testing.assert_allclose(logsumexp([10.,11.]), 10 + logsumexp([0.,1.]))\ndef test_evaluator_single_value():\n    assert logsumexp([-500.]) == -500.0\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_116",
+      "issue": "Min-max scaling must return finite zeros for a constant input and preserve shape.\n",
+      "metadata": {
+        "task_id": "constant_minmax_116",
+        "title": "Finite min-max scaling for constants",
+        "repository": "numerics-heldout",
+        "category": "numerical_stability",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "division by zero makes constant-array scaling nonfinite",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "numpy",
+          "division-by-zero",
+          "scaling",
+          "constant"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/numerics/scaling.py\n+++ b/numerics/scaling.py\n@@ -1,4 +1,7 @@\n import numpy as np\n def minmax_scale(values):\n     data = np.asarray(values, dtype=float)\n-    return (data - data.min()) / (data.max() - data.min())\n+    span = data.max() - data.min()\n+    if span == 0:\n+        return np.zeros_like(data, dtype=float)\n+    return (data - data.min()) / span\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "numerics/scaling.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_constant_values_become_finite_zeros",
+            "evidence": [
+              "tests/test_behavior.py::test_constant_values_become_finite_zeros"
+            ],
+            "mechanism": "division by zero makes constant-array scaling nonfinite",
+            "next_change": "Min-max scaling must return finite zeros for a constant input and preserve shape."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/numerics/scaling.py\n+++ b/numerics/scaling.py\n@@ -1,4 +1,7 @@\n import numpy as np\n def minmax_scale(values):\n     data = np.asarray(values, dtype=float)\n-    return (data - data.min()) / (data.max() - data.min())\n+    span = data.max() - data.min()\n+    if span == 0:\n+        return np.zeros_like(data, dtype=float)\n+    return (data - data.min()) / span\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For numerical_stability, diagnose division by zero makes constant-array scaling nonfinite from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "numerics/__init__.py": "",
+        "numerics/scaling.py": "import numpy as np\ndef minmax_scale(values):\n    data = np.asarray(values, dtype=float)\n    return (data - data.min()) / (data.max() - data.min())\n",
+        "tests/test_behavior.py": "import numpy as np\nfrom numerics.scaling import minmax_scale\ndef test_constant_values_become_finite_zeros():\n    np.testing.assert_array_equal(minmax_scale([4,4,4]), [0,0,0])\ndef test_nonconstant_range_is_zero_to_one():\n    np.testing.assert_allclose(minmax_scale([2,4,6]), [0,.5,1])\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import numpy as np\nfrom numerics.scaling import minmax_scale\ndef test_evaluator_matrix_shape_preserved():\n    data=np.full((2,3),9); assert minmax_scale(data).shape==(2,3)\ndef test_evaluator_output_is_float():\n    assert minmax_scale(np.array([1,1],dtype=int)).dtype.kind=='f'\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_117",
+      "issue": "Use the supplied seed when shuffling indices so repeated calls reproduce the same train/test split.\n",
+      "metadata": {
+        "task_id": "split_seed_117",
+        "title": "Seeded reproducible split indices",
+        "repository": "reproducibility-heldout",
+        "category": "random_seed_handling",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "supplied seed is ignored when constructing the generator",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "numpy",
+          "seed",
+          "split",
+          "reproducibility"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/reproducibility_eval/split.py\n+++ b/reproducibility_eval/split.py\n@@ -1,4 +1,4 @@\n import numpy as np\n def shuffled_indices(size, seed):\n-    rng = np.random.default_rng()\n+    rng = np.random.default_rng(seed)\n     return rng.permutation(size)\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "reproducibility_eval/split.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_same_seed_same_order",
+            "evidence": [
+              "tests/test_behavior.py::test_same_seed_same_order"
+            ],
+            "mechanism": "supplied seed is ignored when constructing the generator",
+            "next_change": "Use the supplied seed when shuffling indices so repeated calls reproduce the same train/test split."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/reproducibility_eval/split.py\n+++ b/reproducibility_eval/split.py\n@@ -1,4 +1,4 @@\n import numpy as np\n def shuffled_indices(size, seed):\n-    rng = np.random.default_rng()\n+    rng = np.random.default_rng(seed)\n     return rng.permutation(size)\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For random_seed_handling, diagnose supplied seed is ignored when constructing the generator from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "reproducibility_eval/__init__.py": "",
+        "reproducibility_eval/split.py": "import numpy as np\ndef shuffled_indices(size, seed):\n    rng = np.random.default_rng()\n    return rng.permutation(size)\n",
+        "tests/test_behavior.py": "import numpy as np\nfrom reproducibility_eval.split import shuffled_indices\ndef test_same_seed_same_order():\n    np.testing.assert_array_equal(shuffled_indices(20,7),shuffled_indices(20,7))\ndef test_result_is_a_permutation():\n    assert sorted(shuffled_indices(10,1).tolist())==list(range(10))\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import numpy as np\nfrom reproducibility_eval.split import shuffled_indices\ndef test_evaluator_known_seed():\n    np.testing.assert_array_equal(shuffled_indices(5,3),np.random.default_rng(3).permutation(5))\ndef test_evaluator_zero_size():\n    assert shuffled_indices(0,9).size==0\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_118",
+      "issue": "Convert Kelvin to Celsius using the exact conventional offset and support NumPy arrays.\n",
+      "metadata": {
+        "task_id": "kelvin_conversion_118",
+        "title": "Kelvin to Celsius offset",
+        "repository": "physics-units-heldout",
+        "category": "scientific_unit_conversion",
+        "difficulty": "easy",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "temperature conversion uses a rounded 273 degree offset",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "physics",
+          "temperature",
+          "kelvin",
+          "units"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/physics_units/temperature.py\n+++ b/physics_units/temperature.py\n@@ -1,3 +1,3 @@\n import numpy as np\n def kelvin_to_celsius(value):\n-    return np.asarray(value, dtype=float) - 273.0\n+    return np.asarray(value, dtype=float) - 273.15\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "physics_units/temperature.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_freezing_point",
+            "evidence": [
+              "tests/test_behavior.py::test_freezing_point"
+            ],
+            "mechanism": "temperature conversion uses a rounded 273 degree offset",
+            "next_change": "Convert Kelvin to Celsius using the exact conventional offset and support NumPy arrays."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/physics_units/temperature.py\n+++ b/physics_units/temperature.py\n@@ -1,3 +1,3 @@\n import numpy as np\n def kelvin_to_celsius(value):\n-    return np.asarray(value, dtype=float) - 273.0\n+    return np.asarray(value, dtype=float) - 273.15\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For scientific_unit_conversion, diagnose temperature conversion uses a rounded 273 degree offset from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "physics_units/__init__.py": "",
+        "physics_units/temperature.py": "import numpy as np\ndef kelvin_to_celsius(value):\n    return np.asarray(value, dtype=float) - 273.0\n",
+        "tests/test_behavior.py": "import numpy as np\nfrom physics_units.temperature import kelvin_to_celsius\ndef test_freezing_point():\n    assert kelvin_to_celsius(273.15) == 0.0\ndef test_array_conversion():\n    np.testing.assert_allclose(kelvin_to_celsius([273.15,373.15]),[0,100])\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "from physics_units.temperature import kelvin_to_celsius\ndef test_evaluator_absolute_zero():\n    assert kelvin_to_celsius(0.0) == -273.15\ndef test_evaluator_scalar_is_zero_dimensional():\n    assert kelvin_to_celsius(300.0).shape == ()\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_119",
+      "issue": "Compute the second difference with periodic boundary conditions, including wrapped neighbors at both ends.\n",
+      "metadata": {
+        "task_id": "periodic_boundary_119",
+        "title": "Periodic one-dimensional Laplacian",
+        "repository": "pde-boundaries-heldout",
+        "category": "scientific_boundary_conditions",
+        "difficulty": "medium",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "edge points use zero-filled rather than periodic neighbors",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "pde",
+          "boundary-condition",
+          "periodic",
+          "finite-difference"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/pde_boundaries/laplacian.py\n+++ b/pde_boundaries/laplacian.py\n@@ -1,6 +1,4 @@\n import numpy as np\n def periodic_laplacian(values, dx=1.0):\n     data=np.asarray(values,dtype=float)\n-    result=np.zeros_like(data)\n-    result[1:-1]=(data[:-2]-2*data[1:-1]+data[2:])/(dx*dx)\n-    return result\n+    return (np.roll(data,1)-2*data+np.roll(data,-1))/(dx*dx)\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "pde_boundaries/laplacian.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_edges_use_wrapped_neighbors",
+            "evidence": [
+              "tests/test_behavior.py::test_edges_use_wrapped_neighbors"
+            ],
+            "mechanism": "edge points use zero-filled rather than periodic neighbors",
+            "next_change": "Compute the second difference with periodic boundary conditions, including wrapped neighbors at both ends."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/pde_boundaries/laplacian.py\n+++ b/pde_boundaries/laplacian.py\n@@ -1,6 +1,4 @@\n import numpy as np\n def periodic_laplacian(values, dx=1.0):\n     data=np.asarray(values,dtype=float)\n-    result=np.zeros_like(data)\n-    result[1:-1]=(data[:-2]-2*data[1:-1]+data[2:])/(dx*dx)\n-    return result\n+    return (np.roll(data,1)-2*data+np.roll(data,-1))/(dx*dx)\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For scientific_boundary_conditions, diagnose edge points use zero-filled rather than periodic neighbors from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "pde_boundaries/__init__.py": "",
+        "pde_boundaries/laplacian.py": "import numpy as np\ndef periodic_laplacian(values, dx=1.0):\n    data=np.asarray(values,dtype=float)\n    result=np.zeros_like(data)\n    result[1:-1]=(data[:-2]-2*data[1:-1]+data[2:])/(dx*dx)\n    return result\n",
+        "tests/test_behavior.py": "import numpy as np\nfrom pde_boundaries.laplacian import periodic_laplacian\ndef test_edges_use_wrapped_neighbors():\n    np.testing.assert_allclose(periodic_laplacian([1,0,0]),[-2,1,1])\ndef test_constant_field_has_zero_laplacian():\n    np.testing.assert_allclose(periodic_laplacian([4,4,4]),[0,0,0])\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import numpy as np\nfrom pde_boundaries.laplacian import periodic_laplacian\ndef test_evaluator_dx_scaling():\n    np.testing.assert_allclose(periodic_laplacian([1,0,0],.5),[-8,4,4])\ndef test_evaluator_sum_is_zero_periodic():\n    assert abs(periodic_laplacian([1,3,-2,4]).sum()) < 1e-12\n"
+      }
+    },
+    {
+      "suite": "evaluation",
+      "name": "task_120",
+      "issue": "Serialize nested NumPy scalars and arrays to standards-compliant JSON, rejecting NaN and infinity.\n",
+      "metadata": {
+        "task_id": "json_numpy_120",
+        "title": "Strict NumPy result serialization",
+        "repository": "results-io-heldout",
+        "category": "result_serialization",
+        "difficulty": "hard",
+        "visible_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests"
+        ],
+        "evaluator_test_command": [
+          "python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests",
+          ".evalforge_evaluator_tests"
+        ],
+        "expected_failure": "standard json encoder cannot handle NumPy values or enforce finite numbers",
+        "dependencies": [
+          "numpy>=1.26",
+          "pytest>=8.2"
+        ],
+        "tags": [
+          "numpy",
+          "json",
+          "serialization",
+          "nan"
+        ],
+        "schema_version": "1.0"
+      },
+      "reference_patch": "--- a/results_io/json_results.py\n+++ b/results_io/json_results.py\n@@ -1,3 +1,14 @@\n import json\n+import numpy as np\n+def _plain(value):\n+    if isinstance(value, np.ndarray):\n+        return [_plain(item) for item in value.tolist()]\n+    if isinstance(value, np.generic):\n+        return value.item()\n+    if isinstance(value, dict):\n+        return {key: _plain(item) for key, item in value.items()}\n+    if isinstance(value, (list, tuple)):\n+        return [_plain(item) for item in value]\n+    return value\n def serialize_results(results):\n-    return json.dumps(results)\n+    return json.dumps(_plain(results), allow_nan=False, sort_keys=True)\n",
+      "scripted_actions": [
+        {
+          "kind": "tool",
+          "plan": "Inspect the implementation named in the issue.",
+          "tool_name": "read_file",
+          "arguments": {
+            "path": "results_io/json_results.py"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Establish verifier evidence before editing.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "tool",
+          "diagnosis": {
+            "failed_test": "tests/test_behavior.py::test_numpy_values_are_serialized",
+            "evidence": [
+              "tests/test_behavior.py::test_numpy_values_are_serialized"
+            ],
+            "mechanism": "standard json encoder cannot handle NumPy values or enforce finite numbers",
+            "next_change": "Serialize nested NumPy scalars and arrays to standards-compliant JSON, rejecting NaN and infinity."
+          },
+          "tool_name": "apply_patch",
+          "arguments": {
+            "patch": "--- a/results_io/json_results.py\n+++ b/results_io/json_results.py\n@@ -1,3 +1,14 @@\n import json\n+import numpy as np\n+def _plain(value):\n+    if isinstance(value, np.ndarray):\n+        return [_plain(item) for item in value.tolist()]\n+    if isinstance(value, np.generic):\n+        return value.item()\n+    if isinstance(value, dict):\n+        return {key: _plain(item) for key, item in value.items()}\n+    if isinstance(value, (list, tuple)):\n+        return [_plain(item) for item in value]\n+    return value\n def serialize_results(results):\n-    return json.dumps(results)\n+    return json.dumps(_plain(results), allow_nan=False, sort_keys=True)\n"
+          }
+        },
+        {
+          "kind": "tool",
+          "plan": "Run the visible verifier after the repair.",
+          "tool_name": "run_tests",
+          "arguments": {}
+        },
+        {
+          "kind": "submit",
+          "plan": "Submit only after the visible verifier passes.",
+          "lesson": "For result_serialization, diagnose standard json encoder cannot handle numpy values or enforce finite numbers from test evidence and make the smallest behavior-preserving repair."
+        }
+      ],
+      "repo_files": {
+        "results_io/__init__.py": "",
+        "results_io/json_results.py": "import json\ndef serialize_results(results):\n    return json.dumps(results)\n",
+        "tests/test_behavior.py": "import json\nimport numpy as np\nimport pytest\nfrom results_io.json_results import serialize_results\ndef test_numpy_values_are_serialized():\n    encoded=serialize_results({'score':np.float64(.5),'labels':np.array([1,2])})\n    assert json.loads(encoded)=={'labels':[1,2],'score':.5}\ndef test_nonfinite_values_are_rejected():\n    with pytest.raises(ValueError): serialize_results({'loss':np.nan})\n"
+      },
+      "evaluator_files": {
+        "test_evaluator.py": "import json\nimport numpy as np\nimport pytest\nfrom results_io.json_results import serialize_results\ndef test_evaluator_nested_numpy_scalars():\n    assert json.loads(serialize_results({'x':[np.int64(3)]}))=={'x':[3]}\ndef test_evaluator_infinity_rejected():\n    with pytest.raises(ValueError): serialize_results(np.array([np.inf]))\n"
+      }
+    }
+  ]
+}

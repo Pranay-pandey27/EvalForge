@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "tool",
+    "plan": "Inspect the implementation named in the issue.",
+    "tool_name": "read_file",
+    "arguments": {
+      "path": "tabular/encoding.py"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Establish verifier evidence before editing.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "tool",
+    "diagnosis": {
+      "failed_test": "tests/test_behavior.py::test_test_only_category_does_not_create_column",
+      "evidence": [
+        "tests/test_behavior.py::test_test_only_category_does_not_create_column"
+      ],
+      "mechanism": "test-only categories leak into the fitted feature space",
+      "next_change": "Fit one-hot categories on training rows only. Test-only categories must not create new feature columns."
+    },
+    "tool_name": "apply_patch",
+    "arguments": {
+      "patch": "--- a/tabular/encoding.py\n+++ b/tabular/encoding.py\n@@ -1,5 +1,9 @@\n import pandas as pd\n def encode_splits(train, test, column):\n-    combined = pd.concat([train[[column]], test[[column]]], ignore_index=True)\n-    encoded = pd.get_dummies(combined[column], prefix=column, dtype=int)\n-    return encoded.iloc[:len(train)].reset_index(drop=True), encoded.iloc[len(train):].reset_index(drop=True)\n+    categories = list(pd.Index(train[column].dropna().unique()))\n+    train_values = pd.Categorical(train[column], categories=categories)\n+    test_values = pd.Categorical(test[column], categories=categories)\n+    columns = [f\"{column}_{value}\" for value in categories]\n+    train_encoded = pd.get_dummies(train_values, prefix=column, dtype=int).reindex(columns=columns, fill_value=0)\n+    test_encoded = pd.get_dummies(test_values, prefix=column, dtype=int).reindex(columns=columns, fill_value=0)\n+    return train_encoded.reset_index(drop=True), test_encoded.reset_index(drop=True)\n"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Run the visible verifier after the repair.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "submit",
+    "plan": "Submit only after the visible verifier passes.",
+    "lesson": "For pandas_data_leakage, diagnose test-only categories leak into the fitted feature space from test evidence and make the smallest behavior-preserving repair."
+  }
+]

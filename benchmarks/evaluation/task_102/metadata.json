@@ -1,0 +1,34 @@
+{
+  "task_id": "numpy_softmax_102",
+  "title": "Row-wise stable softmax",
+  "repository": "array-ops-heldout",
+  "category": "numpy_shape_broadcasting",
+  "difficulty": "medium",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "softmax uses global rather than row-wise normalization",
+  "dependencies": [
+    "numpy>=1.26",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "numpy",
+    "broadcasting",
+    "softmax",
+    "axis"
+  ],
+  "schema_version": "1.0"
+}

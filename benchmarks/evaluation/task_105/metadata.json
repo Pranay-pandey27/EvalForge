@@ -1,0 +1,34 @@
+{
+  "task_id": "target_leak_105",
+  "title": "Exclude target from model features",
+  "repository": "tabular-heldout",
+  "category": "data_split_mistakes",
+  "difficulty": "easy",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "target values are included directly in the feature matrix",
+  "dependencies": [
+    "pandas>=2.2",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "pandas",
+    "target-leakage",
+    "features",
+    "split"
+  ],
+  "schema_version": "1.0"
+}

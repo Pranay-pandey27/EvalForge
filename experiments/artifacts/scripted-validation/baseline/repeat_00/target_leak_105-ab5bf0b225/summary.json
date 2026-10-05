@@ -1,0 +1,63 @@
+{
+  "run_id": "target_leak_105-ab5bf0b225",
+  "task_id": "target_leak_105",
+  "condition": "baseline",
+  "started_at": "2026-08-11T23:32:18.100635Z",
+  "finished_at": "2026-08-11T23:32:23.743030Z",
+  "termination_reason": "tests_passed",
+  "resolved": true,
+  "visible_verification": {
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests"
+    ],
+    "exit_code": 0,
+    "passed": true,
+    "output": "..                                                                       [100%]\n2 passed in 0.95s\n",
+    "runtime_seconds": 1.9042919309999888,
+    "tests_collected": 2,
+    "tests_passed": 2,
+    "tests_failed": null,
+    "environment_error": false
+  },
+  "evaluator_verification": {
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests",
+      ".evalforge_evaluator_tests"
+    ],
+    "exit_code": 0,
+    "passed": true,
+    "output": "....                                                                     [100%]\n4 passed in 0.77s\n",
+    "runtime_seconds": 1.6207872489999318,
+    "tests_collected": 4,
+    "tests_passed": 4,
+    "tests_failed": null,
+    "environment_error": false
+  },
+  "changed_files": [
+    "tabular/features.py"
+  ],
+  "patch_valid": true,
+  "regression_detected": false,
+  "iterations": 2,
+  "tool_calls": 4,
+  "usage": {
+    "input_tokens": null,
+    "output_tokens": null,
+    "estimated_cost_usd": null
+  },
+  "runtime_seconds": 5.6930713510000714,
+  "trace_path": "/workspace/scratch/45e99c6e6aba/evalforge/experiments/runs/scripted-validation/baseline/repeat_00/target_leak_105-ab5bf0b225/trace.jsonl",
+  "workspace_path": "/workspace/scratch/45e99c6e6aba/evalforge/experiments/runs/scripted-validation/baseline/repeat_00/target_leak_105-ab5bf0b225/workspace",
+  "provider": "ScriptedProvider",
+  "model": null,
+  "retrieved_memory_ids": [],
+  "schema_version": "1.0"
+}

@@ -1,0 +1,21 @@
+{
+  "suite_dir": "benchmarks/development",
+  "output_dir": "experiments/runs/development-model",
+  "conditions": ["baseline", "memory", "memory_verifier"],
+  "provider": "litellm",
+  "model": "MODEL_ID_HERE",
+  "repeats": 1,
+  "seed": 17,
+  "budget": {
+    "max_iterations": 8,
+    "max_tool_calls": 40,
+    "max_tokens": 50000,
+    "max_cost_usd": 5.0,
+    "command_timeout_seconds": 60
+  },
+  "memory_db": "experiments/memory/development.sqlite",
+  "persist_memory": true,
+  "runner": "local",
+  "docker_image": "evalforge-bench:latest",
+  "schema_version": "1.0"
+}

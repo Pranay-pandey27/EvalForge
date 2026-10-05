@@ -1,0 +1,9 @@
+--- a/stable_losses/binary.py
++++ b/stable_losses/binary.py
+@@ -3,4 +3,5 @@
+ def binary_cross_entropy(labels: np.ndarray, probabilities: np.ndarray) -> float:
+     y = np.asarray(labels, dtype=float)
+     p = np.asarray(probabilities, dtype=float)
+-    return float(-np.mean(y * np.log(p) + (1 - y) * np.log(1 - p)))
++    safe = np.clip(p, np.finfo(float).eps, 1.0 - np.finfo(float).eps)
++    return float(-np.mean(y * np.log(safe) + (1 - y) * np.log(1 - safe)))

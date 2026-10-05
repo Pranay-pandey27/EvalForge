@@ -1,0 +1,105 @@
+{
+  "additionalProperties": false,
+  "description": "A concise, provenance-bearing lesson from a completed repair attempt.",
+  "properties": {
+    "memory_id": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Memory Id"
+    },
+    "repository": {
+      "minLength": 1,
+      "title": "Repository",
+      "type": "string"
+    },
+    "task_id": {
+      "minLength": 1,
+      "title": "Task Id",
+      "type": "string"
+    },
+    "task_category": {
+      "minLength": 1,
+      "title": "Task Category",
+      "type": "string"
+    },
+    "error_signature": {
+      "minLength": 1,
+      "title": "Error Signature",
+      "type": "string"
+    },
+    "lesson": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Lesson",
+      "type": "string"
+    },
+    "repair_pattern": {
+      "default": "",
+      "maxLength": 2000,
+      "title": "Repair Pattern",
+      "type": "string"
+    },
+    "failed_approach": {
+      "default": "",
+      "maxLength": 2000,
+      "title": "Failed Approach",
+      "type": "string"
+    },
+    "trace_id": {
+      "minLength": 1,
+      "title": "Trace Id",
+      "type": "string"
+    },
+    "verifier_evidence": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Verifier Evidence",
+      "type": "string"
+    },
+    "outcome": {
+      "enum": [
+        "resolved",
+        "failed"
+      ],
+      "title": "Outcome",
+      "type": "string"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "repository",
+    "task_id",
+    "task_category",
+    "error_signature",
+    "lesson",
+    "trace_id",
+    "verifier_evidence",
+    "outcome"
+  ],
+  "title": "MemoryRecord",
+  "type": "object"
+}

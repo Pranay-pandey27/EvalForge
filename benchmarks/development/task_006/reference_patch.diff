@@ -1,0 +1,6 @@
+--- a/tensor_device/batch.py
++++ b/tensor_device/batch.py
+@@ -1,2 +1,2 @@
+ def move_batch(inputs, targets, device):
+-    return inputs.to(device), targets
++    return inputs.to(device), targets.to(device)

@@ -1,0 +1,33 @@
+{
+  "task_id": "dtype_labels_114",
+  "title": "Integer class-label dtype",
+  "repository": "tensor-runtime-heldout",
+  "category": "device_dtype_mismatch",
+  "difficulty": "easy",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "class-index targets are converted to floating rather than long dtype",
+  "dependencies": [
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "pytorch",
+    "dtype",
+    "cross-entropy",
+    "labels"
+  ],
+  "schema_version": "1.0"
+}

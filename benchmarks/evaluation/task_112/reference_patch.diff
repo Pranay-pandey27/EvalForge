@@ -1,0 +1,16 @@
+--- a/torch_loops/accumulation.py
++++ b/torch_loops/accumulation.py
+@@ -1,5 +1,10 @@
+ def train_accumulated(batches, optimizer, backward_batch, accumulation_steps):
+-    for batch in batches:
+-        optimizer.zero_grad()
++    if accumulation_steps < 1:
++        raise ValueError("accumulation_steps must be positive")
++    total = len(batches)
++    for index, batch in enumerate(batches):
++        if index % accumulation_steps == 0:
++            optimizer.zero_grad()
+         backward_batch(batch)
+-        optimizer.step()
++        if (index + 1) % accumulation_steps == 0 or index + 1 == total:
++            optimizer.step()

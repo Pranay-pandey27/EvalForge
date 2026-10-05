@@ -1,0 +1,33 @@
+{
+  "task_id": "device_nested_113",
+  "title": "Move model and nested batch tensors",
+  "repository": "tensor-runtime-heldout",
+  "category": "device_dtype_mismatch",
+  "difficulty": "medium",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "model is moved but nested batch tensors remain on the host device",
+  "dependencies": [
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "pytorch",
+    "device",
+    "model",
+    "batch"
+  ],
+  "schema_version": "1.0"
+}

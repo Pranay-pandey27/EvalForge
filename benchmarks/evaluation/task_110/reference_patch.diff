@@ -1,0 +1,9 @@
+--- a/torch_loops/evaluation.py
++++ b/torch_loops/evaluation.py
+@@ -1,3 +1,4 @@
+ def evaluate(model, batches, score_batch, no_grad):
+-    model.train()
+-    return [score_batch(model, batch) for batch in batches]
++    model.eval()
++    with no_grad():
++        return [score_batch(model, batch) for batch in batches]

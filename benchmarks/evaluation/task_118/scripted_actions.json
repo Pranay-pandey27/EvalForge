@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "tool",
+    "plan": "Inspect the implementation named in the issue.",
+    "tool_name": "read_file",
+    "arguments": {
+      "path": "physics_units/temperature.py"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Establish verifier evidence before editing.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "tool",
+    "diagnosis": {
+      "failed_test": "tests/test_behavior.py::test_freezing_point",
+      "evidence": [
+        "tests/test_behavior.py::test_freezing_point"
+      ],
+      "mechanism": "temperature conversion uses a rounded 273 degree offset",
+      "next_change": "Convert Kelvin to Celsius using the exact conventional offset and support NumPy arrays."
+    },
+    "tool_name": "apply_patch",
+    "arguments": {
+      "patch": "--- a/physics_units/temperature.py\n+++ b/physics_units/temperature.py\n@@ -1,3 +1,3 @@\n import numpy as np\n def kelvin_to_celsius(value):\n-    return np.asarray(value, dtype=float) - 273.0\n+    return np.asarray(value, dtype=float) - 273.15\n"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Run the visible verifier after the repair.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "submit",
+    "plan": "Submit only after the visible verifier passes.",
+    "lesson": "For scientific_unit_conversion, diagnose temperature conversion uses a rounded 273 degree offset from test evidence and make the smallest behavior-preserving repair."
+  }
+]

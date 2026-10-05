@@ -1,0 +1,68 @@
+{
+  "run_id": "gradient_order_111-9ec7469763",
+  "task_id": "gradient_order_111",
+  "condition": "memory_verifier",
+  "started_at": "2026-08-11T23:31:24.310577Z",
+  "finished_at": "2026-08-11T23:31:26.721423Z",
+  "termination_reason": "tests_passed",
+  "resolved": true,
+  "visible_verification": {
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests"
+    ],
+    "exit_code": 0,
+    "passed": true,
+    "output": "..                                                                       [100%]\n2 passed in 0.03s\n",
+    "runtime_seconds": 0.7219212270001663,
+    "tests_collected": 2,
+    "tests_passed": 2,
+    "tests_failed": null,
+    "environment_error": false
+  },
+  "evaluator_verification": {
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests",
+      ".evalforge_evaluator_tests"
+    ],
+    "exit_code": 0,
+    "passed": true,
+    "output": "....                                                                     [100%]\n4 passed in 0.03s\n",
+    "runtime_seconds": 0.6622919400001592,
+    "tests_collected": 4,
+    "tests_passed": 4,
+    "tests_failed": null,
+    "environment_error": false
+  },
+  "changed_files": [
+    "torch_loops/gradient_order.py"
+  ],
+  "patch_valid": true,
+  "regression_detected": false,
+  "iterations": 2,
+  "tool_calls": 4,
+  "usage": {
+    "input_tokens": null,
+    "output_tokens": null,
+    "estimated_cost_usd": null
+  },
+  "runtime_seconds": 2.4505615769999167,
+  "trace_path": "/workspace/scratch/45e99c6e6aba/evalforge/experiments/runs/scripted-validation/memory_verifier/repeat_00/gradient_order_111-9ec7469763/trace.jsonl",
+  "workspace_path": "/workspace/scratch/45e99c6e6aba/evalforge/experiments/runs/scripted-validation/memory_verifier/repeat_00/gradient_order_111-9ec7469763/workspace",
+  "provider": "ScriptedProvider",
+  "model": null,
+  "retrieved_memory_ids": [
+    4,
+    3,
+    6,
+    5
+  ],
+  "schema_version": "1.0"
+}

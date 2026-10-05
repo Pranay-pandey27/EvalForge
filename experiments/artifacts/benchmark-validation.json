@@ -1,0 +1,288 @@
+{
+  "schema_version": "1.0",
+  "created_at": "2026-08-11T23:31:06.452582+00:00",
+  "valid": true,
+  "task_count": 28,
+  "tasks": [
+    {
+      "suite": "development",
+      "task_id": "numpy_broadcast_001",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 5
+    },
+    {
+      "suite": "development",
+      "task_id": "regression_rmse_002",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "development",
+      "task_id": "numerical_log_003",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "development",
+      "task_id": "pandas_leakage_004",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "development",
+      "task_id": "pytorch_zero_grad_005",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "development",
+      "task_id": "device_batch_006",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "development",
+      "task_id": "seed_isolation_007",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "development",
+      "task_id": "units_nanometer_008",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "numpy_axis_101",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "numpy_softmax_102",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "tensor_dims_103",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "pandas_category_leak_104",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "target_leak_105",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "classification_logits_106",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "regression_mae_107",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "macro_f1_108",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "pytorch_train_mode_109",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "pytorch_eval_mode_110",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "gradient_order_111",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "gradient_accumulation_112",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "device_nested_113",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "dtype_labels_114",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "stable_logsumexp_115",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "constant_minmax_116",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "split_seed_117",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "kelvin_conversion_118",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "periodic_boundary_119",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    },
+    {
+      "suite": "evaluation",
+      "task_id": "json_numpy_120",
+      "valid": true,
+      "buggy_state_failed": true,
+      "reference_patch_applied": true,
+      "repaired_state_passed": true,
+      "buggy_tests_collected": 2,
+      "repaired_tests_collected": 4
+    }
+  ]
+}

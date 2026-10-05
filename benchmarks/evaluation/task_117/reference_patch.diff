@@ -1,0 +1,8 @@
+--- a/reproducibility_eval/split.py
++++ b/reproducibility_eval/split.py
+@@ -1,4 +1,4 @@
+ import numpy as np
+ def shuffled_indices(size, seed):
+-    rng = np.random.default_rng()
++    rng = np.random.default_rng(seed)
+     return rng.permutation(size)

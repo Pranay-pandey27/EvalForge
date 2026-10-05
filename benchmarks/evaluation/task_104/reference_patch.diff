@@ -1,0 +1,15 @@
+--- a/tabular/encoding.py
++++ b/tabular/encoding.py
+@@ -1,5 +1,9 @@
+ import pandas as pd
+ def encode_splits(train, test, column):
+-    combined = pd.concat([train[[column]], test[[column]]], ignore_index=True)
+-    encoded = pd.get_dummies(combined[column], prefix=column, dtype=int)
+-    return encoded.iloc[:len(train)].reset_index(drop=True), encoded.iloc[len(train):].reset_index(drop=True)
++    categories = list(pd.Index(train[column].dropna().unique()))
++    train_values = pd.Categorical(train[column], categories=categories)
++    test_values = pd.Categorical(test[column], categories=categories)
++    columns = [f"{column}_{value}" for value in categories]
++    train_encoded = pd.get_dummies(train_values, prefix=column, dtype=int).reindex(columns=columns, fill_value=0)
++    test_encoded = pd.get_dummies(test_values, prefix=column, dtype=int).reindex(columns=columns, fill_value=0)
++    return train_encoded.reset_index(drop=True), test_encoded.reset_index(drop=True)

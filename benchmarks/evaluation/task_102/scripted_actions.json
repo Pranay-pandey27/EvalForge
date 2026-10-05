@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "tool",
+    "plan": "Inspect the implementation named in the issue.",
+    "tool_name": "read_file",
+    "arguments": {
+      "path": "array_ops/softmax.py"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Establish verifier evidence before editing.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "tool",
+    "diagnosis": {
+      "failed_test": "tests/test_behavior.py::test_each_row_sums_to_one",
+      "evidence": [
+        "tests/test_behavior.py::test_each_row_sums_to_one"
+      ],
+      "mechanism": "softmax uses global rather than row-wise normalization",
+      "next_change": "Softmax must normalize each row independently and remain stable for large logits."
+    },
+    "tool_name": "apply_patch",
+    "arguments": {
+      "patch": "--- a/array_ops/softmax.py\n+++ b/array_ops/softmax.py\n@@ -1,6 +1,6 @@\n import numpy as np\n def softmax_rows(logits):\n     values = np.asarray(logits, dtype=float)\n-    shifted = values - values.max()\n+    shifted = values - values.max(axis=1, keepdims=True)\n     exponentials = np.exp(shifted)\n-    return exponentials / exponentials.sum()\n+    return exponentials / exponentials.sum(axis=1, keepdims=True)\n"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Run the visible verifier after the repair.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "submit",
+    "plan": "Submit only after the visible verifier passes.",
+    "lesson": "For numpy_shape_broadcasting, diagnose softmax uses global rather than row-wise normalization from test evidence and make the smallest behavior-preserving repair."
+  }
+]

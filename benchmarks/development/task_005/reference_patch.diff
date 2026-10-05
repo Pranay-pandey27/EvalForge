@@ -1,0 +1,8 @@
+--- a/torch_loop/training.py
++++ b/torch_loop/training.py
+@@ -1,4 +1,5 @@
+ def train_batch(model, inputs, targets, optimizer, loss_fn):
++    optimizer.zero_grad()
+     predictions = model(inputs)
+     loss = loss_fn(predictions, targets)
+     loss.backward()

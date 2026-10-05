@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "tool",
+    "plan": "Inspect the implementation named in the issue.",
+    "tool_name": "read_file",
+    "arguments": {
+      "path": "tensor_runtime/device.py"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Establish verifier evidence before editing.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "tool",
+    "diagnosis": {
+      "failed_test": "tests/test_behavior.py::test_model_and_batch_share_device",
+      "evidence": [
+        "tests/test_behavior.py::test_model_and_batch_share_device"
+      ],
+      "mechanism": "model is moved but nested batch tensors remain on the host device",
+      "next_change": "Move the model and every tensor in the batch tuple to the selected device before returning them."
+    },
+    "tool_name": "apply_patch",
+    "arguments": {
+      "patch": "--- a/tensor_runtime/device.py\n+++ b/tensor_runtime/device.py\n@@ -1,2 +1,2 @@\n def prepare(model, batch, device):\n-    return model.to(device), batch\n+    return model.to(device), tuple(tensor.to(device) for tensor in batch)\n"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Run the visible verifier after the repair.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "submit",
+    "plan": "Submit only after the visible verifier passes.",
+    "lesson": "For device_dtype_mismatch, diagnose model is moved but nested batch tensors remain on the host device from test evidence and make the smallest behavior-preserving repair."
+  }
+]

@@ -1,0 +1,34 @@
+{
+  "task_id": "stable_logsumexp_115",
+  "title": "Overflow-safe log-sum-exp",
+  "repository": "numerics-heldout",
+  "category": "numerical_stability",
+  "difficulty": "medium",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "direct exponentiation overflows for large inputs",
+  "dependencies": [
+    "numpy>=1.26",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "numpy",
+    "overflow",
+    "logsumexp",
+    "numerical-stability"
+  ],
+  "schema_version": "1.0"
+}

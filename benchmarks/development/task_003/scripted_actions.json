@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "tool",
+    "plan": "Inspect the implementation named in the issue.",
+    "tool_name": "read_file",
+    "arguments": {
+      "path": "stable_losses/binary.py"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Establish verifier evidence before editing.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "tool",
+    "diagnosis": {
+      "failed_test": "tests/test_behavior.py::test_boundary_probabilities_are_finite",
+      "evidence": [
+        "tests/test_behavior.py::test_boundary_probabilities_are_finite"
+      ],
+      "mechanism": "logarithms at probability boundaries produce NaN or infinity",
+      "next_change": "Binary cross entropy returns infinities for probabilities at 0 or 1. Make it finite without mutating inputs."
+    },
+    "tool_name": "apply_patch",
+    "arguments": {
+      "patch": "--- a/stable_losses/binary.py\n+++ b/stable_losses/binary.py\n@@ -3,4 +3,5 @@\n def binary_cross_entropy(labels: np.ndarray, probabilities: np.ndarray) -> float:\n     y = np.asarray(labels, dtype=float)\n     p = np.asarray(probabilities, dtype=float)\n-    return float(-np.mean(y * np.log(p) + (1 - y) * np.log(1 - p)))\n+    safe = np.clip(p, np.finfo(float).eps, 1.0 - np.finfo(float).eps)\n+    return float(-np.mean(y * np.log(safe) + (1 - y) * np.log(1 - safe)))\n"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Run the visible verifier after the repair.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "submit",
+    "plan": "Submit only after the visible verifier passes.",
+    "lesson": "For numerical_stability, diagnose logarithms at probability boundaries produce nan or infinity from test evidence and make the smallest behavior-preserving repair."
+  }
+]

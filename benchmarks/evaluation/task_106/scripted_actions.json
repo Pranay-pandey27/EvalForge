@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "tool",
+    "plan": "Inspect the implementation named in the issue.",
+    "tool_name": "read_file",
+    "arguments": {
+      "path": "heldout_metrics/classification.py"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Establish verifier evidence before editing.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "tool",
+    "diagnosis": {
+      "failed_test": "tests/test_behavior.py::test_zero_is_logit_decision_boundary",
+      "evidence": [
+        "tests/test_behavior.py::test_zero_is_logit_decision_boundary"
+      ],
+      "mechanism": "raw logits are thresholded at 0.5 instead of zero",
+      "next_change": "`binary_accuracy_from_logits` receives raw logits, so use the correct decision boundary and validate matching shapes."
+    },
+    "tool_name": "apply_patch",
+    "arguments": {
+      "patch": "--- a/heldout_metrics/classification.py\n+++ b/heldout_metrics/classification.py\n@@ -1,4 +1,8 @@\n import numpy as np\n def binary_accuracy_from_logits(logits, labels):\n-    predictions = np.asarray(logits) > 0.5\n-    return float(np.mean(predictions == np.asarray(labels)))\n+    scores = np.asarray(logits)\n+    targets = np.asarray(labels)\n+    if scores.shape != targets.shape:\n+        raise ValueError(\"logits and labels must have matching shapes\")\n+    predictions = scores > 0.0\n+    return float(np.mean(predictions == targets))\n"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Run the visible verifier after the repair.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "submit",
+    "plan": "Submit only after the visible verifier passes.",
+    "lesson": "For classification_metrics, diagnose raw logits are thresholded at 0.5 instead of zero from test evidence and make the smallest behavior-preserving repair."
+  }
+]

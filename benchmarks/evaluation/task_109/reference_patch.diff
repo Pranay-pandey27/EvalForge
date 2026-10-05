@@ -1,0 +1,8 @@
+--- a/torch_loops/train_mode.py
++++ b/torch_loops/train_mode.py
+@@ -1,4 +1,5 @@
+ def train_epoch(model, batches, update_batch):
++    model.train()
+     losses = []
+     for batch in batches:
+         losses.append(update_batch(model, batch))

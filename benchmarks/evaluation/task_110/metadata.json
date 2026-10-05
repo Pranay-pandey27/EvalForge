@@ -1,0 +1,33 @@
+{
+  "task_id": "pytorch_eval_mode_110",
+  "title": "Evaluation mode and no-grad context",
+  "repository": "torch-loops-heldout",
+  "category": "pytorch_training_loop",
+  "difficulty": "medium",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "evaluation uses training mode and tracks gradients",
+  "dependencies": [
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "pytorch",
+    "eval-mode",
+    "no-grad",
+    "inference"
+  ],
+  "schema_version": "1.0"
+}

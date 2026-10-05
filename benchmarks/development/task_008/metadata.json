@@ -1,0 +1,34 @@
+{
+  "task_id": "units_nanometer_008",
+  "title": "Meters to nanometers conversion",
+  "repository": "scientific-units-mini",
+  "category": "scientific_unit_conversion",
+  "difficulty": "easy",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "SI conversion uses micrometer factor instead of nanometer factor",
+  "dependencies": [
+    "numpy>=1.26",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "physics",
+    "units",
+    "si",
+    "conversion"
+  ],
+  "schema_version": "1.0"
+}

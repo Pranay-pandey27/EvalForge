@@ -1,0 +1,44 @@
+[
+  {
+    "condition": "baseline",
+    "runs": 20,
+    "unique_tasks": 20,
+    "task_resolution_rate": 1.0,
+    "test_pass_rate": 1.0,
+    "patch_validity_rate": 1.0,
+    "average_iterations": 2.0,
+    "average_runtime_seconds": 3.1757163126000023,
+    "average_tokens": null,
+    "average_cost_usd": null,
+    "regression_rate": 0.0,
+    "failure_taxonomy": {}
+  },
+  {
+    "condition": "memory",
+    "runs": 20,
+    "unique_tasks": 20,
+    "task_resolution_rate": 1.0,
+    "test_pass_rate": 1.0,
+    "patch_validity_rate": 1.0,
+    "average_iterations": 2.0,
+    "average_runtime_seconds": 3.1951852653000516,
+    "average_tokens": null,
+    "average_cost_usd": null,
+    "regression_rate": 0.0,
+    "failure_taxonomy": {}
+  },
+  {
+    "condition": "memory_verifier",
+    "runs": 20,
+    "unique_tasks": 20,
+    "task_resolution_rate": 1.0,
+    "test_pass_rate": 1.0,
+    "patch_validity_rate": 1.0,
+    "average_iterations": 2.0,
+    "average_runtime_seconds": 3.143038745550007,
+    "average_tokens": null,
+    "average_cost_usd": null,
+    "regression_rate": 0.0,
+    "failure_taxonomy": {}
+  }
+]

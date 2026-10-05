@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "tool",
+    "plan": "Inspect the implementation named in the issue.",
+    "tool_name": "read_file",
+    "arguments": {
+      "path": "tabular_preprocessing/centering.py"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Establish verifier evidence before editing.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "tool",
+    "diagnosis": {
+      "failed_test": "tests/test_behavior.py::test_statistics_are_fit_on_train_only",
+      "evidence": [
+        "tests/test_behavior.py::test_statistics_are_fit_on_train_only"
+      ],
+      "mechanism": "preprocessing statistics include held-out test rows",
+      "next_change": "The centering transformer learns its mean from both train and test rows. Fit statistics on training data only and apply them to both splits."
+    },
+    "tool_name": "apply_patch",
+    "arguments": {
+      "patch": "--- a/tabular_preprocessing/centering.py\n+++ b/tabular_preprocessing/centering.py\n@@ -1,6 +1,5 @@\n import pandas as pd\n \n def center_splits(train: pd.DataFrame, test: pd.DataFrame):\n-    combined = pd.concat([train, test], ignore_index=True)\n-    mean = combined.mean()\n+    mean = train.mean()\n     return train - mean, test - mean, mean\n"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Run the visible verifier after the repair.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "submit",
+    "plan": "Submit only after the visible verifier passes.",
+    "lesson": "For pandas_data_leakage, diagnose preprocessing statistics include held-out test rows from test evidence and make the smallest behavior-preserving repair."
+  }
+]

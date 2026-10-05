@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "tool",
+    "plan": "Inspect the implementation named in the issue.",
+    "tool_name": "read_file",
+    "arguments": {
+      "path": "torch_loops/accumulation.py"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Establish verifier evidence before editing.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "tool",
+    "diagnosis": {
+      "failed_test": "tests/test_behavior.py::test_two_batch_windows",
+      "evidence": [
+        "tests/test_behavior.py::test_two_batch_windows"
+      ],
+      "mechanism": "optimizer clears and steps every batch instead of per accumulation window",
+      "next_change": "Accumulate gradients for `accumulation_steps` batches: clear at each window start and step at each full window or final partial window."
+    },
+    "tool_name": "apply_patch",
+    "arguments": {
+      "patch": "--- a/torch_loops/accumulation.py\n+++ b/torch_loops/accumulation.py\n@@ -1,5 +1,10 @@\n def train_accumulated(batches, optimizer, backward_batch, accumulation_steps):\n-    for batch in batches:\n-        optimizer.zero_grad()\n+    if accumulation_steps < 1:\n+        raise ValueError(\"accumulation_steps must be positive\")\n+    total = len(batches)\n+    for index, batch in enumerate(batches):\n+        if index % accumulation_steps == 0:\n+            optimizer.zero_grad()\n         backward_batch(batch)\n-        optimizer.step()\n+        if (index + 1) % accumulation_steps == 0 or index + 1 == total:\n+            optimizer.step()\n"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Run the visible verifier after the repair.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "submit",
+    "plan": "Submit only after the visible verifier passes.",
+    "lesson": "For incorrect_gradient_handling, diagnose optimizer clears and steps every batch instead of per accumulation window from test evidence and make the smallest behavior-preserving repair."
+  }
+]

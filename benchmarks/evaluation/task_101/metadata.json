@@ -1,0 +1,34 @@
+{
+  "task_id": "numpy_axis_101",
+  "title": "Feature-wise L2 norms",
+  "repository": "array-ops-heldout",
+  "category": "numpy_shape_broadcasting",
+  "difficulty": "easy",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "reduction uses the sample axis instead of the feature axis",
+  "dependencies": [
+    "numpy>=1.26",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "numpy",
+    "axis",
+    "shape",
+    "norm"
+  ],
+  "schema_version": "1.0"
+}

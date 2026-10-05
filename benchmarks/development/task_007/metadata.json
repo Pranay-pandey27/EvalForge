@@ -1,0 +1,34 @@
+{
+  "task_id": "seed_isolation_007",
+  "title": "Local reproducible bootstrap RNG",
+  "repository": "reproducibility-mini",
+  "category": "random_seed_handling",
+  "difficulty": "medium",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "function mutates NumPy global random state",
+  "dependencies": [
+    "numpy>=1.26",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "numpy",
+    "random",
+    "seed",
+    "reproducibility"
+  ],
+  "schema_version": "1.0"
+}

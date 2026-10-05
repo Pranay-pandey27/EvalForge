@@ -1,0 +1,4 @@
+condition,runs,unique_tasks,task_resolution_rate,test_pass_rate,patch_validity_rate,average_iterations,average_runtime_seconds,average_tokens,average_cost_usd,regression_rate
+baseline,20,20,1.0,1.0,1.0,2.0,3.1757163126000023,,,0.0
+memory,20,20,1.0,1.0,1.0,2.0,3.1951852653000516,,,0.0
+memory_verifier,20,20,1.0,1.0,1.0,2.0,3.143038745550007,,,0.0

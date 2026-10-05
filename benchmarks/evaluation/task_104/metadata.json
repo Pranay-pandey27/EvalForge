@@ -1,0 +1,34 @@
+{
+  "task_id": "pandas_category_leak_104",
+  "title": "Train-fitted one-hot categories",
+  "repository": "tabular-heldout",
+  "category": "pandas_data_leakage",
+  "difficulty": "hard",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "test-only categories leak into the fitted feature space",
+  "dependencies": [
+    "pandas>=2.2",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "pandas",
+    "one-hot",
+    "leakage",
+    "categories"
+  ],
+  "schema_version": "1.0"
+}

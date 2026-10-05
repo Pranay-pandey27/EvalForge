@@ -1,0 +1,34 @@
+{
+  "task_id": "classification_logits_106",
+  "title": "Binary accuracy from logits",
+  "repository": "metrics-heldout",
+  "category": "classification_metrics",
+  "difficulty": "easy",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "raw logits are thresholded at 0.5 instead of zero",
+  "dependencies": [
+    "numpy>=1.26",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "classification",
+    "logits",
+    "accuracy",
+    "metrics"
+  ],
+  "schema_version": "1.0"
+}

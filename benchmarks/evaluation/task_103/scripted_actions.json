@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "tool",
+    "plan": "Inspect the implementation named in the issue.",
+    "tool_name": "read_file",
+    "arguments": {
+      "path": "tensor_shapes/images.py"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Establish verifier evidence before editing.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "tool",
+    "diagnosis": {
+      "failed_test": "tests/test_behavior.py::test_output_is_batch_by_channel",
+      "evidence": [
+        "tests/test_behavior.py::test_output_is_batch_by_channel"
+      ],
+      "mechanism": "mean reduces the channel dimension and leaves a spatial dimension",
+      "next_change": "For NCHW image batches, return one spatial mean per batch item and channel with shape (N, C)."
+    },
+    "tool_name": "apply_patch",
+    "arguments": {
+      "patch": "--- a/tensor_shapes/images.py\n+++ b/tensor_shapes/images.py\n@@ -1,4 +1,4 @@\n import numpy as np\n def spatial_channel_mean(images):\n     values = np.asarray(images, dtype=float)\n-    return values.mean(axis=(1, 2))\n+    return values.mean(axis=(2, 3))\n"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Run the visible verifier after the repair.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "submit",
+    "plan": "Submit only after the visible verifier passes.",
+    "lesson": "For bad_tensor_dimensions, diagnose mean reduces the channel dimension and leaves a spatial dimension from test evidence and make the smallest behavior-preserving repair."
+  }
+]

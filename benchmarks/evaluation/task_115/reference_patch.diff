@@ -1,0 +1,9 @@
+--- a/numerics/logsumexp.py
++++ b/numerics/logsumexp.py
+@@ -1,4 +1,5 @@
+ import numpy as np
+ def logsumexp(values):
+     data = np.asarray(values, dtype=float)
+-    return float(np.log(np.exp(data).sum()))
++    maximum = data.max()
++    return float(maximum + np.log(np.exp(data - maximum).sum()))

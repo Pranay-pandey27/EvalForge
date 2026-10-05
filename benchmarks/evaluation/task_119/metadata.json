@@ -1,0 +1,34 @@
+{
+  "task_id": "periodic_boundary_119",
+  "title": "Periodic one-dimensional Laplacian",
+  "repository": "pde-boundaries-heldout",
+  "category": "scientific_boundary_conditions",
+  "difficulty": "medium",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "edge points use zero-filled rather than periodic neighbors",
+  "dependencies": [
+    "numpy>=1.26",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "pde",
+    "boundary-condition",
+    "periodic",
+    "finite-difference"
+  ],
+  "schema_version": "1.0"
+}

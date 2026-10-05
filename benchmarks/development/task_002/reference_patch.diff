@@ -1,0 +1,8 @@
+--- a/ml_metrics/regression.py
++++ b/ml_metrics/regression.py
+@@ -2,4 +2,4 @@
+ 
+ def rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+     errors = np.asarray(y_true, dtype=float) - np.asarray(y_pred, dtype=float)
+-    return float(np.mean(errors ** 2))
++    return float(np.sqrt(np.mean(errors ** 2)))

@@ -1,0 +1,33 @@
+{
+  "task_id": "pytorch_train_mode_109",
+  "title": "Activate training mode for an epoch",
+  "repository": "torch-loops-heldout",
+  "category": "pytorch_training_loop",
+  "difficulty": "easy",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "training loop never calls model.train()",
+  "dependencies": [
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "pytorch",
+    "train-mode",
+    "dropout",
+    "batchnorm"
+  ],
+  "schema_version": "1.0"
+}

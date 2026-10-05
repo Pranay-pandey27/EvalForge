@@ -1,0 +1,34 @@
+{
+  "task_id": "json_numpy_120",
+  "title": "Strict NumPy result serialization",
+  "repository": "results-io-heldout",
+  "category": "result_serialization",
+  "difficulty": "hard",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "standard json encoder cannot handle NumPy values or enforce finite numbers",
+  "dependencies": [
+    "numpy>=1.26",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "numpy",
+    "json",
+    "serialization",
+    "nan"
+  ],
+  "schema_version": "1.0"
+}

@@ -1,0 +1,6 @@
+--- a/tensor_runtime/device.py
++++ b/tensor_runtime/device.py
+@@ -1,2 +1,2 @@
+ def prepare(model, batch, device):
+-    return model.to(device), batch
++    return model.to(device), tuple(tensor.to(device) for tensor in batch)

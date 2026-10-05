@@ -1,0 +1,34 @@
+{
+  "task_id": "regression_mae_107",
+  "title": "Mean absolute error",
+  "repository": "metrics-heldout",
+  "category": "regression_metrics",
+  "difficulty": "easy",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "function computes RMSE instead of mean absolute error",
+  "dependencies": [
+    "numpy>=1.26",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "regression",
+    "mae",
+    "metrics",
+    "numpy"
+  ],
+  "schema_version": "1.0"
+}

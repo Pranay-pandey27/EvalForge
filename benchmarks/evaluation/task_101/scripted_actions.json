@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "tool",
+    "plan": "Inspect the implementation named in the issue.",
+    "tool_name": "read_file",
+    "arguments": {
+      "path": "array_ops/norms.py"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Establish verifier evidence before editing.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "tool",
+    "diagnosis": {
+      "failed_test": "tests/test_behavior.py::test_returns_one_norm_per_feature",
+      "evidence": [
+        "tests/test_behavior.py::test_returns_one_norm_per_feature"
+      ],
+      "mechanism": "reduction uses the sample axis instead of the feature axis",
+      "next_change": "Compute one L2 norm per feature column for a two-dimensional sample matrix."
+    },
+    "tool_name": "apply_patch",
+    "arguments": {
+      "patch": "--- a/array_ops/norms.py\n+++ b/array_ops/norms.py\n@@ -1,4 +1,4 @@\n import numpy as np\n def feature_l2_norms(matrix):\n     values = np.asarray(matrix, dtype=float)\n-    return np.sqrt(np.sum(values ** 2, axis=1))\n+    return np.sqrt(np.sum(values ** 2, axis=0))\n"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Run the visible verifier after the repair.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "submit",
+    "plan": "Submit only after the visible verifier passes.",
+    "lesson": "For numpy_shape_broadcasting, diagnose reduction uses the sample axis instead of the feature axis from test evidence and make the smallest behavior-preserving repair."
+  }
+]

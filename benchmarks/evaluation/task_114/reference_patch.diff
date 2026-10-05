@@ -1,0 +1,6 @@
+--- a/tensor_runtime/labels.py
++++ b/tensor_runtime/labels.py
+@@ -1,2 +1,2 @@
+ def prepare_class_labels(labels):
+-    return labels.float()
++    return labels.long()

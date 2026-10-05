@@ -1,0 +1,33 @@
+{
+  "task_id": "pytorch_zero_grad_005",
+  "title": "Clear gradients before a training batch",
+  "repository": "torch-loop-mini",
+  "category": "pytorch_training_loop",
+  "difficulty": "easy",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "optimizer gradients are not cleared before backward",
+  "dependencies": [
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "pytorch",
+    "gradient",
+    "optimizer",
+    "training-loop"
+  ],
+  "schema_version": "1.0"
+}

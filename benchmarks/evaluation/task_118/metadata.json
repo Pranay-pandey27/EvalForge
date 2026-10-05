@@ -1,0 +1,34 @@
+{
+  "task_id": "kelvin_conversion_118",
+  "title": "Kelvin to Celsius offset",
+  "repository": "physics-units-heldout",
+  "category": "scientific_unit_conversion",
+  "difficulty": "easy",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "temperature conversion uses a rounded 273 degree offset",
+  "dependencies": [
+    "numpy>=1.26",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "physics",
+    "temperature",
+    "kelvin",
+    "units"
+  ],
+  "schema_version": "1.0"
+}

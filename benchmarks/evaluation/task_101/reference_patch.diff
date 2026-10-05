@@ -1,0 +1,8 @@
+--- a/array_ops/norms.py
++++ b/array_ops/norms.py
+@@ -1,4 +1,4 @@
+ import numpy as np
+ def feature_l2_norms(matrix):
+     values = np.asarray(matrix, dtype=float)
+-    return np.sqrt(np.sum(values ** 2, axis=1))
++    return np.sqrt(np.sum(values ** 2, axis=0))

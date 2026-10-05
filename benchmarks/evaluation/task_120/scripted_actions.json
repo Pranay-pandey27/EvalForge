@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "tool",
+    "plan": "Inspect the implementation named in the issue.",
+    "tool_name": "read_file",
+    "arguments": {
+      "path": "results_io/json_results.py"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Establish verifier evidence before editing.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "tool",
+    "diagnosis": {
+      "failed_test": "tests/test_behavior.py::test_numpy_values_are_serialized",
+      "evidence": [
+        "tests/test_behavior.py::test_numpy_values_are_serialized"
+      ],
+      "mechanism": "standard json encoder cannot handle NumPy values or enforce finite numbers",
+      "next_change": "Serialize nested NumPy scalars and arrays to standards-compliant JSON, rejecting NaN and infinity."
+    },
+    "tool_name": "apply_patch",
+    "arguments": {
+      "patch": "--- a/results_io/json_results.py\n+++ b/results_io/json_results.py\n@@ -1,3 +1,14 @@\n import json\n+import numpy as np\n+def _plain(value):\n+    if isinstance(value, np.ndarray):\n+        return [_plain(item) for item in value.tolist()]\n+    if isinstance(value, np.generic):\n+        return value.item()\n+    if isinstance(value, dict):\n+        return {key: _plain(item) for key, item in value.items()}\n+    if isinstance(value, (list, tuple)):\n+        return [_plain(item) for item in value]\n+    return value\n def serialize_results(results):\n-    return json.dumps(results)\n+    return json.dumps(_plain(results), allow_nan=False, sort_keys=True)\n"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Run the visible verifier after the repair.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "submit",
+    "plan": "Submit only after the visible verifier passes.",
+    "lesson": "For result_serialization, diagnose standard json encoder cannot handle numpy values or enforce finite numbers from test evidence and make the smallest behavior-preserving repair."
+  }
+]

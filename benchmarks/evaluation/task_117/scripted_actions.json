@@ -1,0 +1,42 @@
+[
+  {
+    "kind": "tool",
+    "plan": "Inspect the implementation named in the issue.",
+    "tool_name": "read_file",
+    "arguments": {
+      "path": "reproducibility_eval/split.py"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Establish verifier evidence before editing.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "tool",
+    "diagnosis": {
+      "failed_test": "tests/test_behavior.py::test_same_seed_same_order",
+      "evidence": [
+        "tests/test_behavior.py::test_same_seed_same_order"
+      ],
+      "mechanism": "supplied seed is ignored when constructing the generator",
+      "next_change": "Use the supplied seed when shuffling indices so repeated calls reproduce the same train/test split."
+    },
+    "tool_name": "apply_patch",
+    "arguments": {
+      "patch": "--- a/reproducibility_eval/split.py\n+++ b/reproducibility_eval/split.py\n@@ -1,4 +1,4 @@\n import numpy as np\n def shuffled_indices(size, seed):\n-    rng = np.random.default_rng()\n+    rng = np.random.default_rng(seed)\n     return rng.permutation(size)\n"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Run the visible verifier after the repair.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "submit",
+    "plan": "Submit only after the visible verifier passes.",
+    "lesson": "For random_seed_handling, diagnose supplied seed is ignored when constructing the generator from test evidence and make the smallest behavior-preserving repair."
+  }
+]

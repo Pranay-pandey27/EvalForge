@@ -1,0 +1,10 @@
+--- a/torch_loops/gradient_order.py
++++ b/torch_loops/gradient_order.py
+@@ -1,6 +1,6 @@
+ def optimize_batch(model, batch, optimizer, loss_fn):
++    optimizer.zero_grad()
+     loss = loss_fn(model(batch))
+     loss.backward()
+-    optimizer.zero_grad()
+     optimizer.step()
+     return loss

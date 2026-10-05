@@ -1,0 +1,21 @@
+{
+  "suite_dir": "benchmarks/development",
+  "output_dir": "experiments/runs/scripted-seed",
+  "conditions": ["memory"],
+  "provider": "scripted",
+  "model": null,
+  "repeats": 1,
+  "seed": 17,
+  "budget": {
+    "max_iterations": 8,
+    "max_tool_calls": 40,
+    "max_tokens": null,
+    "max_cost_usd": null,
+    "command_timeout_seconds": 60
+  },
+  "memory_db": "experiments/runs/scripted-memory.sqlite",
+  "persist_memory": true,
+  "runner": "local",
+  "docker_image": "evalforge-bench:latest",
+  "schema_version": "1.0"
+}

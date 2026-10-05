@@ -1,0 +1,63 @@
+{
+  "run_id": "pytorch_eval_mode_110-63b014fd5d",
+  "task_id": "pytorch_eval_mode_110",
+  "condition": "baseline",
+  "started_at": "2026-08-11T23:33:06.090561Z",
+  "finished_at": "2026-08-11T23:33:08.579488Z",
+  "termination_reason": "tests_passed",
+  "resolved": true,
+  "visible_verification": {
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests"
+    ],
+    "exit_code": 0,
+    "passed": true,
+    "output": "..                                                                       [100%]\n2 passed in 0.03s\n",
+    "runtime_seconds": 0.7885299720001058,
+    "tests_collected": 2,
+    "tests_passed": 2,
+    "tests_failed": null,
+    "environment_error": false
+  },
+  "evaluator_verification": {
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests",
+      ".evalforge_evaluator_tests"
+    ],
+    "exit_code": 0,
+    "passed": true,
+    "output": "....                                                                     [100%]\n4 passed in 0.04s\n",
+    "runtime_seconds": 0.7673799609997332,
+    "tests_collected": 4,
+    "tests_passed": 4,
+    "tests_failed": null,
+    "environment_error": false
+  },
+  "changed_files": [
+    "torch_loops/evaluation.py"
+  ],
+  "patch_valid": true,
+  "regression_detected": false,
+  "iterations": 2,
+  "tool_calls": 4,
+  "usage": {
+    "input_tokens": null,
+    "output_tokens": null,
+    "estimated_cost_usd": null
+  },
+  "runtime_seconds": 2.5366084259999298,
+  "trace_path": "/workspace/scratch/45e99c6e6aba/evalforge/experiments/runs/scripted-validation/baseline/repeat_00/pytorch_eval_mode_110-63b014fd5d/trace.jsonl",
+  "workspace_path": "/workspace/scratch/45e99c6e6aba/evalforge/experiments/runs/scripted-validation/baseline/repeat_00/pytorch_eval_mode_110-63b014fd5d/workspace",
+  "provider": "ScriptedProvider",
+  "model": null,
+  "retrieved_memory_ids": [],
+  "schema_version": "1.0"
+}

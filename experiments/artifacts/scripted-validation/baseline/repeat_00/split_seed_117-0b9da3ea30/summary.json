@@ -1,0 +1,63 @@
+{
+  "run_id": "split_seed_117-0b9da3ea30",
+  "task_id": "split_seed_117",
+  "condition": "baseline",
+  "started_at": "2026-08-11T23:33:33.523181Z",
+  "finished_at": "2026-08-11T23:33:36.823207Z",
+  "termination_reason": "tests_passed",
+  "resolved": true,
+  "visible_verification": {
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests"
+    ],
+    "exit_code": 0,
+    "passed": true,
+    "output": "..                                                                       [100%]\n2 passed in 0.30s\n",
+    "runtime_seconds": 1.0694471950000661,
+    "tests_collected": 2,
+    "tests_passed": 2,
+    "tests_failed": null,
+    "environment_error": false
+  },
+  "evaluator_verification": {
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests",
+      ".evalforge_evaluator_tests"
+    ],
+    "exit_code": 0,
+    "passed": true,
+    "output": "....                                                                     [100%]\n4 passed in 0.26s\n",
+    "runtime_seconds": 0.9903440690000025,
+    "tests_collected": 4,
+    "tests_passed": 4,
+    "tests_failed": null,
+    "environment_error": false
+  },
+  "changed_files": [
+    "reproducibility_eval/split.py"
+  ],
+  "patch_valid": true,
+  "regression_detected": false,
+  "iterations": 2,
+  "tool_calls": 4,
+  "usage": {
+    "input_tokens": null,
+    "output_tokens": null,
+    "estimated_cost_usd": null
+  },
+  "runtime_seconds": 3.3465482679998786,
+  "trace_path": "/workspace/scratch/45e99c6e6aba/evalforge/experiments/runs/scripted-validation/baseline/repeat_00/split_seed_117-0b9da3ea30/trace.jsonl",
+  "workspace_path": "/workspace/scratch/45e99c6e6aba/evalforge/experiments/runs/scripted-validation/baseline/repeat_00/split_seed_117-0b9da3ea30/workspace",
+  "provider": "ScriptedProvider",
+  "model": null,
+  "retrieved_memory_ids": [],
+  "schema_version": "1.0"
+}

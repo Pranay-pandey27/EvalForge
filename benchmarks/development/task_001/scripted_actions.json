@@ -1,0 +1,38 @@
+[
+  {
+    "kind": "tool",
+    "plan": "Inspect the normalization implementation named in the issue.",
+    "tool_name": "read_file",
+    "arguments": {"path": "scientific_stats/normalization.py"}
+  },
+  {
+    "kind": "tool",
+    "plan": "Establish verifier evidence before editing.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "tool",
+    "diagnosis": {
+      "failed_test": "tests/test_normalization.py::test_standardizes_each_feature_column",
+      "evidence": ["tests/test_normalization.py::test_standardizes_each_feature_column"],
+      "mechanism": "Row-reduction vectors cannot broadcast over a rectangular matrix; column statistics require axis 0 with preserved dimensions.",
+      "next_change": "Compute column means and standard deviations with keepdims and protect constant columns."
+    },
+    "tool_name": "apply_patch",
+    "arguments": {
+      "patch": "diff --git a/scientific_stats/normalization.py b/scientific_stats/normalization.py\n--- a/scientific_stats/normalization.py\n+++ b/scientific_stats/normalization.py\n@@ -15,7 +15,9 @@ def zscore_features(values: np.ndarray) -> np.ndarray:\n     if matrix.ndim != 2:\n         raise ValueError(\"values must be a two-dimensional feature matrix\")\n \n-    means = matrix.mean(axis=1)\n-    standard_deviations = matrix.std(axis=1)\n-    return (matrix - means) / standard_deviations\n-\n+    means = matrix.mean(axis=0, keepdims=True)\n+    standard_deviations = matrix.std(axis=0, keepdims=True)\n+    safe_standard_deviations = np.where(\n+        standard_deviations == 0.0, 1.0, standard_deviations\n+    )\n+    return (matrix - means) / safe_standard_deviations\n"
+    }
+  },
+  {
+    "kind": "tool",
+    "plan": "Run the visible verifier after the repair.",
+    "tool_name": "run_tests",
+    "arguments": {}
+  },
+  {
+    "kind": "submit",
+    "plan": "Submit only after the visible verifier passes.",
+    "lesson": "For NumPy feature normalization, align reduction axes with feature columns, preserve broadcast dimensions, and handle zero-variance columns explicitly."
+  }
+]

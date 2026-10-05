@@ -1,0 +1,33 @@
+{
+  "task_id": "regression_rmse_002",
+  "title": "Root mean squared error implementation",
+  "repository": "ml-metrics-mini",
+  "category": "regression_metrics",
+  "difficulty": "easy",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "RMSE omits the outer square root and reports MSE",
+  "dependencies": [
+    "numpy>=1.26",
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "numpy",
+    "metrics",
+    "regression"
+  ],
+  "schema_version": "1.0"
+}

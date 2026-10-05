@@ -1,0 +1,21 @@
+{
+  "task_id": "numpy_broadcast_001",
+  "title": "Column-wise z-score broadcasting",
+  "repository": "scientific-stats-mini",
+  "category": "numpy_shape_broadcasting",
+  "difficulty": "easy",
+  "visible_test_command": ["python", "-m", "pytest", "-q", "tests"],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "row statistics have incompatible shape for rectangular feature matrices",
+  "dependencies": ["numpy>=1.26", "pytest>=8.2"],
+  "tags": ["numpy", "broadcasting", "numerical-stability"],
+  "schema_version": "1.0"
+}
+

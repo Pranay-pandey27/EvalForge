@@ -1,0 +1,33 @@
+{
+  "task_id": "device_batch_006",
+  "title": "Move all batch tensors to the target device",
+  "repository": "tensor-device-mini",
+  "category": "device_dtype_mismatch",
+  "difficulty": "easy",
+  "visible_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests"
+  ],
+  "evaluator_test_command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests",
+    ".evalforge_evaluator_tests"
+  ],
+  "expected_failure": "target tensor remains on a different device from inputs",
+  "dependencies": [
+    "pytest>=8.2"
+  ],
+  "tags": [
+    "pytorch",
+    "device",
+    "tensor",
+    "batch"
+  ],
+  "schema_version": "1.0"
+}

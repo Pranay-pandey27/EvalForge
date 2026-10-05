@@ -1,0 +1,168 @@
+[
+  {
+    "memory_id": 1,
+    "repository": "tabular-preprocessing-mini",
+    "task_id": "pandas_leakage_004",
+    "task_category": "pandas_data_leakage",
+    "error_signature": "preprocessing statistics include held-out test rows",
+    "lesson": "For pandas_data_leakage, diagnose preprocessing statistics include held-out test rows from test evidence and make the smallest behavior-preserving repair.",
+    "repair_pattern": "Changed: tabular_preprocessing/centering.py",
+    "failed_approach": "",
+    "trace_id": "pandas_leakage_004-1dcc406ae2",
+    "verifier_evidence": "....                                                                     [100%]\n4 passed in 0.77s",
+    "outcome": "resolved",
+    "tags": [
+      "pandas",
+      "data-leakage",
+      "preprocessing",
+      "split"
+    ],
+    "created_at": "2026-08-11T23:16:46.703608Z",
+    "schema_version": "1.0"
+  },
+  {
+    "memory_id": 2,
+    "repository": "ml-metrics-mini",
+    "task_id": "regression_rmse_002",
+    "task_category": "regression_metrics",
+    "error_signature": "RMSE omits the outer square root and reports MSE",
+    "lesson": "For regression_metrics, diagnose rmse omits the outer square root and reports mse from test evidence and make the smallest behavior-preserving repair.",
+    "repair_pattern": "Changed: ml_metrics/regression.py",
+    "failed_approach": "",
+    "trace_id": "regression_rmse_002-c2f5e1658d",
+    "verifier_evidence": "....                                                                     [100%]\n4 passed in 0.21s",
+    "outcome": "resolved",
+    "tags": [
+      "numpy",
+      "metrics",
+      "regression"
+    ],
+    "created_at": "2026-08-11T23:16:49.500465Z",
+    "schema_version": "1.0"
+  },
+  {
+    "memory_id": 3,
+    "repository": "scientific-stats-mini",
+    "task_id": "numpy_broadcast_001",
+    "task_category": "numpy_shape_broadcasting",
+    "error_signature": "row statistics have incompatible shape for rectangular feature matrices",
+    "lesson": "For NumPy feature normalization, align reduction axes with feature columns, preserve broadcast dimensions, and handle zero-variance columns explicitly.",
+    "repair_pattern": "Changed: scientific_stats/normalization.py",
+    "failed_approach": "",
+    "trace_id": "numpy_broadcast_001-db4390cafd",
+    "verifier_evidence": ".....                                                                    [100%]\n5 passed in 0.25s",
+    "outcome": "resolved",
+    "tags": [
+      "numpy",
+      "broadcasting",
+      "numerical-stability"
+    ],
+    "created_at": "2026-08-11T23:16:52.318368Z",
+    "schema_version": "1.0"
+  },
+  {
+    "memory_id": 4,
+    "repository": "torch-loop-mini",
+    "task_id": "pytorch_zero_grad_005",
+    "task_category": "pytorch_training_loop",
+    "error_signature": "optimizer gradients are not cleared before backward",
+    "lesson": "For pytorch_training_loop, diagnose optimizer gradients are not cleared before backward from test evidence and make the smallest behavior-preserving repair.",
+    "repair_pattern": "Changed: torch_loop/training.py",
+    "failed_approach": "",
+    "trace_id": "pytorch_zero_grad_005-dc49542fa1",
+    "verifier_evidence": "....                                                                     [100%]\n4 passed in 0.06s",
+    "outcome": "resolved",
+    "tags": [
+      "pytorch",
+      "gradient",
+      "optimizer",
+      "training-loop"
+    ],
+    "created_at": "2026-08-11T23:16:54.488482Z",
+    "schema_version": "1.0"
+  },
+  {
+    "memory_id": 5,
+    "repository": "tensor-device-mini",
+    "task_id": "device_batch_006",
+    "task_category": "device_dtype_mismatch",
+    "error_signature": "target tensor remains on a different device from inputs",
+    "lesson": "For device_dtype_mismatch, diagnose target tensor remains on a different device from inputs from test evidence and make the smallest behavior-preserving repair.",
+    "repair_pattern": "Changed: tensor_device/batch.py",
+    "failed_approach": "",
+    "trace_id": "device_batch_006-1de52dbcd2",
+    "verifier_evidence": "....                                                                     [100%]\n4 passed in 0.03s",
+    "outcome": "resolved",
+    "tags": [
+      "pytorch",
+      "device",
+      "tensor",
+      "batch"
+    ],
+    "created_at": "2026-08-11T23:16:56.623983Z",
+    "schema_version": "1.0"
+  },
+  {
+    "memory_id": 6,
+    "repository": "stable-losses-mini",
+    "task_id": "numerical_log_003",
+    "task_category": "numerical_stability",
+    "error_signature": "logarithms at probability boundaries produce NaN or infinity",
+    "lesson": "For numerical_stability, diagnose logarithms at probability boundaries produce nan or infinity from test evidence and make the smallest behavior-preserving repair.",
+    "repair_pattern": "Changed: stable_losses/binary.py",
+    "failed_approach": "",
+    "trace_id": "numerical_log_003-d5c5c3da94",
+    "verifier_evidence": "....                                                                     [100%]\n4 passed in 0.22s",
+    "outcome": "resolved",
+    "tags": [
+      "numpy",
+      "loss",
+      "log0",
+      "numerical-stability"
+    ],
+    "created_at": "2026-08-11T23:16:59.523878Z",
+    "schema_version": "1.0"
+  },
+  {
+    "memory_id": 7,
+    "repository": "scientific-units-mini",
+    "task_id": "units_nanometer_008",
+    "task_category": "scientific_unit_conversion",
+    "error_signature": "SI conversion uses micrometer factor instead of nanometer factor",
+    "lesson": "For scientific_unit_conversion, diagnose si conversion uses micrometer factor instead of nanometer factor from test evidence and make the smallest behavior-preserving repair.",
+    "repair_pattern": "Changed: scientific_units/length.py",
+    "failed_approach": "",
+    "trace_id": "units_nanometer_008-5dc5f29ae8",
+    "verifier_evidence": "....                                                                     [100%]\n4 passed in 0.25s",
+    "outcome": "resolved",
+    "tags": [
+      "physics",
+      "units",
+      "si",
+      "conversion"
+    ],
+    "created_at": "2026-08-11T23:17:02.471489Z",
+    "schema_version": "1.0"
+  },
+  {
+    "memory_id": 8,
+    "repository": "reproducibility-mini",
+    "task_id": "seed_isolation_007",
+    "task_category": "random_seed_handling",
+    "error_signature": "function mutates NumPy global random state",
+    "lesson": "For random_seed_handling, diagnose function mutates numpy global random state from test evidence and make the smallest behavior-preserving repair.",
+    "repair_pattern": "Changed: reproducibility/bootstrap.py",
+    "failed_approach": "",
+    "trace_id": "seed_isolation_007-1aa4122595",
+    "verifier_evidence": "....                                                                     [100%]\n4 passed in 0.30s",
+    "outcome": "resolved",
+    "tags": [
+      "numpy",
+      "random",
+      "seed",
+      "reproducibility"
+    ],
+    "created_at": "2026-08-11T23:17:05.730682Z",
+    "schema_version": "1.0"
+  }
+]
